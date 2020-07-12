@@ -1,0 +1,34 @@
+[package]
+name = "advent-of-rust"
+version = "0.1.0"
+authors = ["kalvatn"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "common"
+path = "src/lib.rs"
+
+[[bin]]
+name = "2015-01"
+path = "src/bin/2015/01.rs"
+
+[[bin]]
+name = "2015-02"
+path = "src/bin/2015/02.rs"
+
+[[bin]]
+name = "2015-03"
+path = "src/bin/2015/03.rs"
+
+[[bin]]
+name = "2015-04"
+path = "src/bin/2015/04.rs"
+
+[[bin]]
+name = "2015-05"
+path = "src/bin/2015/05.rs"
+
+[dependencies]
+md5 = "0.7.0"
