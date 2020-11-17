@@ -35,14 +35,12 @@ impl Instruction {
                 Regex::new(r"^(turn on|turn off|toggle) (\d+),(\d+) through (\d+),(\d+)$").unwrap();
         }
         RE.captures(string)
-            .map(|cap| {
-                Instruction {
-                    row_start: cap[2].parse().unwrap(),
-                    row_end: cap[4].parse::<usize>().unwrap() + 1,
-                    col_start: cap[3].parse().unwrap(),
-                    col_end: cap[5].parse::<usize>().unwrap() + 1,
-                    action: Action::from_string(&cap[1]),
-                }
+            .map(|cap| Instruction {
+                row_start: cap[2].parse().unwrap(),
+                row_end: cap[4].parse::<usize>().unwrap() + 1,
+                col_start: cap[3].parse().unwrap(),
+                col_end: cap[5].parse::<usize>().unwrap() + 1,
+                action: Action::from_string(&cap[1]),
             })
             .unwrap()
     }

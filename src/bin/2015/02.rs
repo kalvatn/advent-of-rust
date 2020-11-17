@@ -17,7 +17,8 @@ fn parse_line(line: &str) -> Vec<u32> {
 }
 
 fn part_one(lines: Vec<&str>) -> u32 {
-    let sum_paper = lines.iter()
+    let sum_paper = lines
+        .iter()
         .map(|line| parse_line(line))
         .map(|dim| calc_paper(dim[0], dim[1], dim[2]))
         .sum();
@@ -25,7 +26,8 @@ fn part_one(lines: Vec<&str>) -> u32 {
 }
 
 fn part_two(lines: Vec<&str>) -> u32 {
-    let sum_paper = lines.iter()
+    let sum_paper = lines
+        .iter()
         .map(|line| parse_line(line))
         .map(|dim| calc_ribbon(dim[0], dim[1], dim[2]))
         .sum();
@@ -73,4 +75,3 @@ mod test {
         assert_eq!(part_two(Vec::from(["2x3x4", "1x1x10"])), 34 + 14);
     }
 }
-

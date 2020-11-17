@@ -5,14 +5,16 @@ fn parse_directions(input: &str) -> Vec<char> {
 }
 
 fn directions_to_int(directions: Vec<char>) -> Vec<i32> {
-    return directions.iter()
+    return directions
+        .iter()
         .map(|c| -> i32 {
             match c {
                 '(' => 1,
                 ')' => -1,
-                _ => 0
+                _ => 0,
             }
-        }).collect();
+        })
+        .collect();
 }
 
 fn part_one(directions: Vec<char>) -> i32 {
@@ -20,13 +22,15 @@ fn part_one(directions: Vec<char>) -> i32 {
 }
 
 fn part_two(directions: Vec<char>) -> usize {
-    return directions_to_int(directions).iter()
+    return directions_to_int(directions)
+        .iter()
         .scan(0, |acc, &n| {
             *acc = *acc + n;
             Some(*acc)
         })
         .take_while(|x| x != &-1)
-        .count() + 1;
+        .count()
+        + 1;
 }
 
 fn main() {
@@ -47,7 +51,10 @@ mod test {
 
     #[test]
     fn test_directions_to_int() {
-        assert_eq!(directions_to_int(vec!['(', '(', ')', ')']), vec![1, 1, -1, -1]);
+        assert_eq!(
+            directions_to_int(vec!['(', '(', ')', ')']),
+            vec![1, 1, -1, -1]
+        );
     }
 
     #[test]
