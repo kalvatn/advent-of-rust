@@ -1,8 +1,12 @@
-use common::io;
+use std::time::Instant;
+
 use lazy_static::lazy_static;
 use regex::Regex;
 
-#[derive(Debug)]
+use common::io;
+use Action::{Toggle, TurnOff, TurnOn};
+
+#[derive(Debug, PartialEq, Eq)]
 enum Action {
     TurnOn,
     TurnOff,
@@ -12,15 +16,15 @@ enum Action {
 impl Action {
     fn from_string(string: &str) -> Action {
         match string {
-            "turn on" => Action::TurnOn,
-            "turn off" => Action::TurnOff,
-            "toggle" => Action::Toggle,
+            "turn on" => TurnOn,
+            "turn off" => TurnOff,
+            "toggle" => Toggle,
             _ => panic!("impossiburu"),
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 struct Instruction {
     row_start: usize,
     col_start: usize,
@@ -28,6 +32,7 @@ struct Instruction {
     col_end: usize,
     action: Action,
 }
+
 impl Instruction {
     fn from_string(string: &str) -> Instruction {
         lazy_static! {
@@ -46,47 +51,108 @@ impl Instruction {
     }
 }
 
-fn main() {
-    let input = io::read_input("2015-06");
-    let mut instructions: Vec<Instruction> = vec![];
-    for line in input.split("\n") {
-        let ins = Instruction::from_string(line);
-        instructions.push(ins);
-    }
-    let mut grid = [[0u32; 1000]; 1000];
-    let mut grid2 = [[0u32; 1000]; 1000];
+fn read_input() -> String {
+    return io::read_input("2015-06");
+}
+
+fn parse_instructions(input: &str) -> Vec<Instruction> {
+    return input
+        .lines()
+        .map(|line| Instruction::from_string(line))
+        .collect();
+}
+
+type Grid = [[i64; 1000]];
+
+fn mutate_grid(grid: &mut Grid, instructions: Vec<Instruction>, p1: bool) {
     for instruction in instructions {
         for y in instruction.row_start..instruction.row_end {
             for x in instruction.col_start..instruction.col_end {
                 match instruction.action {
-                    Action::TurnOn => {
-                        grid[y][x] = 1;
-                        grid2[y][x] += 1;
+                    TurnOn => {
+                        if p1 == true {
+                            grid[y][x] = 1;
+                        } else {
+                            grid[y][x] += 1;
+                        }
                     }
-                    Action::TurnOff => {
-                        grid[y][x] = 0;
-                        let cur = grid2[y][x];
-                        grid2[y][x] -= if cur > 0 { 1 } else { 0 };
+                    TurnOff => {
+                        if p1 == true {
+                            grid[y][x] = 0;
+                        } else {
+                            let cur = grid[y][x];
+                            grid[y][x] -= if cur > 0 { 1 } else { 0 };
+                        }
                     }
-                    Action::Toggle => {
-                        let cur = grid[y][x];
-                        grid[y][x] = if cur == 0 { 1 } else { 0 };
-                        grid2[y][x] += 2;
+                    Toggle => {
+                        if p1 == true {
+                            let cur = grid[y][x];
+                            grid[y][x] = if cur == 0 { 1 } else { 0 };
+                        } else {
+                            grid[y][x] += 2;
+                        }
                     }
                 }
             }
         }
     }
-    let mut count = 0;
-    let mut brightness = 0;
-    for y in 0..grid.len() {
-        for x in 0..grid.len() {
-            if grid[y][x] == 1 {
-                count += 1;
-            }
-            brightness += grid2[y][x];
-        }
+}
+
+fn part_one(input: &str) -> usize {
+    let instructions = parse_instructions(&input);
+    let mut grid = vec![[0; 1000]; 1000];
+    mutate_grid(&mut grid, instructions, true);
+    return grid.iter().flatten().filter(|light| **light == 1).count();
+}
+
+fn part_two(input: &str) -> i64 {
+    let instructions = parse_instructions(&input);
+    let mut grid = vec![[0; 1000]; 1000];
+    mutate_grid(&mut grid, instructions, false);
+    return grid.iter().flatten().sum();
+}
+
+fn main() {
+    let input = read_input();
+    let timer = Instant::now();
+    println!(
+        "part one {} {}ms",
+        part_one(&input),
+        timer.elapsed().as_millis()
+    );
+    println!(
+        "part two {} {}ms",
+        part_two(&input),
+        timer.elapsed().as_millis()
+    );
+    println!("total {}ms", timer.elapsed().as_millis())
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_parse_instructions() {
+        assert_eq!(
+            parse_instructions("turn on 0,0 through 999,999"),
+            vec![Instruction {
+                row_start: 0,
+                col_start: 0,
+                row_end: 1000,
+                col_end: 1000,
+                action: Action::TurnOn,
+            }]
+        );
     }
-    println!("{}", count);
-    println!("{}", brightness);
+
+    #[test]
+    fn test_part_one() {
+        assert_eq!(part_one(&read_input()), 543903);
+    }
+
+    #[test]
+    fn test_part_two() {
+        assert_eq!(part_two(&read_input()), 14687245);
+    }
 }
