@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use common::io;
 
 fn is_vowel(ch: char) -> bool {
@@ -10,8 +12,9 @@ fn is_vowel(ch: char) -> bool {
         _ => false,
     };
 }
-fn is_allowed(string: String) -> bool {
-    return match string.as_str() {
+
+fn is_allowed(string: &str) -> bool {
+    return match string {
         "ab" => false,
         "cd" => false,
         "pq" => false,
@@ -20,33 +23,38 @@ fn is_allowed(string: String) -> bool {
     };
 }
 
+fn is_xx(xx: &str) -> bool {
+    return xx.len() == 2 && xx.chars().nth(0) == xx.chars().nth(1);
+}
+
 fn is_nice(string: &str) -> bool {
     let mut vowels = 0;
     let mut consecutive = 0;
-    let mut prev: (usize, char) = (0, '1');
+    let mut prev: (usize, char) = (0, '?');
     for chars in string.chars().enumerate() {
-        let index = chars.0;
-        let ch = chars.1;
-        if is_vowel(ch) {
+        let (index, c) = chars;
+        if is_vowel(c) {
             vowels += 1;
         }
         if index > 0 {
-            if prev.1 == ch {
-                consecutive += 1;
+            let ab = format!("{}{}", prev.1, c);
+            if is_xx(&ab) {
+                consecutive += 1
             }
-            let lol = format!("{}{}", prev.1, ch);
-            if !is_allowed(lol) {
+            if !is_allowed(&ab) {
                 return false;
             }
         }
-        prev = (index, ch);
+        prev = (index, c);
     }
     return vowels >= 3 && consecutive >= 1;
 }
+
 struct LetterPair {
     index: usize,
     string: String,
 }
+
 fn is_nice_2(string: &str) -> bool {
     let vec: Vec<char> = string.chars().collect();
     let mut combos: Vec<LetterPair> = vec![];
@@ -84,18 +92,90 @@ fn is_nice_2(string: &str) -> bool {
     return has_pattern && has_repeat;
 }
 
+fn read_input() -> String {
+    return io::read_input("2015-05");
+}
+
+fn part_one(input: &str) -> usize {
+    return input.split_whitespace().filter(|s| is_nice(s)).count();
+}
+
+fn part_two(input: &str) -> usize {
+    return input.split_whitespace().filter(|s| is_nice_2(s)).count();
+}
+
 fn main() {
-    let input = io::read_input("2015-05");
-    let mut nice_1 = 0;
-    let mut nice_2 = 0;
-    for line in input.split_whitespace() {
-        if is_nice(line) {
-            nice_1 += 1;
-        }
-        if is_nice_2(line) {
-            nice_2 += 1;
-        }
+    let input = &read_input();
+    let timer = Instant::now();
+    println!(
+        "part one {} {}ms",
+        part_one(input),
+        timer.elapsed().as_millis()
+    );
+    println!(
+        "part two {} {}ms",
+        part_two(input),
+        timer.elapsed().as_millis()
+    );
+    println!("total {}ms", timer.elapsed().as_millis());
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_is_vowel() {
+        "aeiou".chars().for_each(|c| assert!(is_vowel(c), true));
+        "bcdfghjklmnpqrstvwxzy"
+            .chars()
+            .for_each(|c| assert!(!is_vowel(c)));
     }
-    println!("{}", nice_1);
-    println!("{}", nice_2);
+
+    #[test]
+    fn test_is_allowed() {
+        vec!["ab", "cd", "pq", "xy"]
+            .iter()
+            .for_each(|s| assert!(!is_allowed(s)));
+    }
+
+    #[test]
+    fn test_is_xx() {
+        vec!["xx", "yy", "aa", "bb", "dd"]
+            .iter()
+            .for_each(|s| assert!(is_xx(s)));
+        vec!["xy", "bc", "ax", "ay", "la", "abcd"]
+            .iter()
+            .for_each(|s| assert!(!is_xx(s)));
+    }
+
+    #[test]
+    fn test_is_nice() {
+        vec!["ugknbfddgicrmopn", "aaa"]
+            .iter()
+            .for_each(|s| assert!(is_nice(s)));
+        vec!["jchzalrnumimnmhp", "haegwjzuvuyypxyu", "dvszwmarrgswjxmb"]
+            .iter()
+            .for_each(|s| assert!(!is_nice(s)));
+    }
+
+    #[test]
+    fn test_is_nice_2() {
+        vec!["qjhvhtzxzqqjkmpb", "xxyxx"]
+            .iter()
+            .for_each(|s| assert!(is_nice_2(s)));
+        vec!["uurcxstgmygtbstg", "ieodomkazucvgmuy"]
+            .iter()
+            .for_each(|s| assert!(!is_nice_2(s)));
+    }
+
+    #[test]
+    fn test_part_one() {
+        assert_eq!(part_one(&read_input()), 255);
+    }
+
+    #[test]
+    fn test_part_two() {
+        assert_eq!(part_two(&read_input()), 55);
+    }
 }
