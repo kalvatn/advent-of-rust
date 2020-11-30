@@ -54,6 +54,11 @@ path = "src/bin/2015/10.rs"
 name = "2015-11"
 path = "src/bin/2015/11.rs"
 
+[[bin]]
+name = "2015-12"
+path = "src/bin/2015/12.rs"
+
+
 [dependencies]
 md5 = "0.7.0"
 futures = "0.3.5"
@@ -62,3 +67,4 @@ reqwest = "0.10.6"
 regex = "1.3.9"
 lazy_static = "1.4.0"
 #petgraph = "0.5.1"
+serde_json = "1.0"

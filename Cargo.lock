@@ -9,6 +9,7 @@ dependencies = [
  "md5",
  "regex",
  "reqwest",
+ "serde_json",
  "tokio",
 ]
 
