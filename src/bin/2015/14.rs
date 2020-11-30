@@ -26,6 +26,7 @@ struct ReindeerState {
   distance: usize,
   flying_for: usize,
   resting_for: usize,
+  points: usize,
 }
 
 impl Reindeer {
@@ -63,6 +64,7 @@ fn parse_input(input: &str) -> Vec<Reindeer> {
             distance: 0,
             resting_for: 0,
             flying_for: 0,
+            points: 0,
           },
         })
         .unwrap()
@@ -82,8 +84,19 @@ fn part_one(input: &str, secs: usize) -> usize {
 }
 
 #[allow(unused_variables)]
-fn part_two(input: &str) -> usize {
-  return 0;
+fn part_two(input: &str, secs: usize) -> usize {
+  let mut reindeers = parse_input(input);
+  for i in 1..secs + 1 {
+    reindeers.iter_mut().for_each(|r| r.fly());
+    reindeers.sort_by(|a, b| b.state.distance.cmp(&a.state.distance));
+    let leading_distance = reindeers.iter().nth(0).unwrap().state.distance;
+    reindeers.iter_mut().for_each(|r| {
+      if r.state.distance == leading_distance {
+        r.state.points += 1;
+      }
+    });
+  }
+  reindeers.iter().map(|r| r.state.points).max().unwrap()
 }
 
 fn main() {
@@ -98,7 +111,7 @@ fn main() {
   let p2_timer = Instant::now();
   println!(
     "part two {} {}ms",
-    part_two(&input),
+    part_two(&input, 2503),
     p2_timer.elapsed().as_millis()
   );
   println!("total {}ms", p1_timer.elapsed().as_millis())
@@ -125,6 +138,9 @@ Dancer can fly 16 km/s for 11 seconds, but then must rest for 162 seconds.";
 
   #[test]
   fn test_part_two() {
-    assert_eq!(part_two(&read_input()), 0);
+    assert_eq!(part_two(TEST_INPUT, 1), 1);
+    assert_eq!(part_two(TEST_INPUT, 140), 139);
+    assert_eq!(part_two(TEST_INPUT, 1000), 689);
+    assert_eq!(part_two(&read_input(), 2503), 1102);
   }
 }
