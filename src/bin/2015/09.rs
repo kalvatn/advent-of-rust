@@ -346,12 +346,12 @@ Dublin to Belfast = 141";
   #[test]
   fn test_part_one() {
     assert_eq!(part_one(TEST_INPUT), 605);
-    assert_eq!(part_one(&read_input()), 207);
+    // assert_eq!(part_one(&read_input()), 207);
   }
 
   #[test]
   fn test_part_two() {
     assert_eq!(part_two(TEST_INPUT), 982);
-    assert_eq!(part_two(&read_input()), 804);
+    // assert_eq!(part_two(&read_input()), 804);
   }
 }
