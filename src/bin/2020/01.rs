@@ -29,6 +29,9 @@ fn part_two(input: &str) -> u32 {
   let numbers = parse_input(input);
   for i in &numbers {
     for j in &numbers {
+      if i + j > 2020 {
+        continue;
+      }
       for k in &numbers {
         if j != i && j != k && j + i + k == 2020 {
           return j * i * k;
@@ -44,17 +47,17 @@ fn main() {
 
   let p1_timer = Instant::now();
   println!(
-    "part one {} {}ms",
+    "part one {} {}µs",
     part_one(&input),
-    p1_timer.elapsed().as_millis()
+    p1_timer.elapsed().as_micros()
   );
   let p2_timer = Instant::now();
   println!(
-    "part two {} {}ms",
+    "part two {} {}µs",
     part_two(&input),
-    p2_timer.elapsed().as_millis()
+    p2_timer.elapsed().as_micros()
   );
-  println!("total {}ms", p1_timer.elapsed().as_millis())
+  println!("total {}µs", p1_timer.elapsed().as_micros())
 }
 
 #[cfg(test)]
