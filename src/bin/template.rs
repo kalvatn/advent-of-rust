@@ -1,3 +1,9 @@
+#![allow(unused_variables, unused_imports)]
+
+use itertools::Itertools;
+use lazy_static::lazy_static;
+use regex::Regex;
+use std::collections::{HashMap, HashSet};
 use std::time::Instant;
 
 use common::io;
@@ -6,37 +12,31 @@ fn read_input() -> String {
   return io::read_input("20XX-DD");
 }
 
-fn parse_input(input: &str) -> Vec<char> {
-  return input.chars().collect();
+fn parse_input(input: &str) -> &str {
+  return input;
 }
 
-#[allow(unused_variables)]
 fn part_one(input: &str) -> usize {
   return 0;
 }
 
-#[allow(unused_variables)]
 fn part_two(input: &str) -> usize {
   return 0;
 }
 
 fn main() {
   let input = read_input();
-  println!("{}", input);
+  println!("{:?}", input);
 
-  let p1_timer = Instant::now();
-  println!(
-    "part one {} {}ms",
-    part_one(&input),
-    p1_timer.elapsed().as_millis()
-  );
-  let p2_timer = Instant::now();
-  println!(
-    "part two {} {}ms",
-    part_two(&input),
-    p2_timer.elapsed().as_millis()
-  );
-  println!("total {}ms", p1_timer.elapsed().as_millis())
+  let time = Instant::now();
+  let p1 = part_one(&input);
+  let p1_time = time.elapsed();
+
+  let time = Instant::now();
+  let p2 = part_two(&input);
+  let p2_time = time.elapsed();
+  println!("part one {:?} {:?}", p1, p1_time);
+  println!("part two {:?} {:?}", p2, p2_time);
 }
 
 #[cfg(test)]

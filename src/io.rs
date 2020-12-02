@@ -1,20 +1,19 @@
-use reqwest::Client;
+use reqwest::blocking::Client;
+use reqwest::Error;
 use std::fs::File;
 use std::io;
 use std::io::Read;
 use std::path::Path;
 
-#[tokio::main]
-pub async fn download_input(url: &str) -> Result<String, reqwest::Error> {
+pub fn download_input(url: &str) -> Result<String, Error> {
   println!("downloading input from {}", url);
   let client = Client::new();
   let cookie = read_cookie();
   let response = client
     .get(url)
     .header("Cookie", format!("session={}", cookie))
-    .send()
-    .await?;
-  let text = response.text().await?;
+    .send()?;
+  let text = response.text()?;
   Ok(text)
 }
 
@@ -28,6 +27,9 @@ fn read_cookie() -> String {
 }
 
 pub fn read_input(filename: &str) -> String {
+  if filename.is_empty() {
+    panic!("empty filename")
+  }
   let filepath = format!("inputs/{}", filename);
   let path = Path::new(&filepath);
   let file = match path.exists() {
