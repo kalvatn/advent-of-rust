@@ -1,97 +1,94 @@
-use std::time::Instant;
+use std::str::FromStr;
+use std::string::ParseError;
+use std::time::{Duration, Instant};
 
+use lazy_static::lazy_static;
 use regex::Regex;
 
 use common::io;
+
+struct Policy {
+  n1: usize,
+  n2: usize,
+  letter: char,
+  password: String,
+}
+
+impl Policy {
+  fn password_has_valid_count(&self) -> bool {
+    let count = &self.password.chars().filter(|c| c == &self.letter).count();
+    count >= &self.n1 && count <= &self.n2
+  }
+
+  fn password_has_valid_positions(&self) -> bool {
+    let first = &self.password.chars().nth(&self.n1 - 1).unwrap();
+    let second = &self.password.chars().nth(&self.n2 - 1).unwrap();
+    return first != second && (first == &self.letter || second == &self.letter);
+  }
+}
+
+impl FromStr for Policy {
+  type Err = ParseError;
+
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    lazy_static! {
+      static ref RE: Regex = Regex::new(r"^(\d+)-(\d+) (\w): (\w+)$").unwrap();
+    }
+    Ok(
+      RE.captures(s)
+        .map(|cap| Policy {
+          n1: cap[1].parse::<usize>().unwrap(),
+          n2: cap[2].parse::<usize>().unwrap(),
+          letter: cap[3].parse::<char>().unwrap(),
+          password: cap[4].to_string(),
+        })
+        .unwrap(),
+    )
+  }
+}
 
 fn read_input() -> String {
   return io::read_input("2020-02");
 }
 
-struct Instruction {
-  min: usize,
-  max: usize,
-  c: char,
-  s: String,
-}
-
-fn parse_input(input: &str) -> Vec<Instruction> {
-  let re: Regex = Regex::new(r"^(\d+)-(\d+) (\w): (\w+)$").unwrap();
+fn parse_input(input: &str) -> Vec<Policy> {
   input
     .lines()
-    .map(|line| {
-      re.captures(line)
-        .map(|cap| Instruction {
-          min: cap[1].parse::<usize>().unwrap(),
-          max: cap[2].parse::<usize>().unwrap(),
-          c: cap[3].parse::<char>().unwrap(),
-          s: cap[4].to_string(),
-        })
-        .unwrap()
-    })
+    .map(|line| Policy::from_str(line).unwrap())
     .collect()
 }
 
-fn has_count(min: usize, max: usize, c: char, s: &str) -> bool {
-  let mut count = 0usize;
-  for key in s.chars() {
-    if key == c {
-      count += 1;
-    }
-  }
-  count >= min && count <= max
+fn part_one(input: &str) -> (usize, Duration) {
+  let vec = parse_input(input);
+  let timer = Instant::now();
+  (
+    vec
+      .iter()
+      .filter(|policy| policy.password_has_valid_count())
+      .count(),
+    timer.elapsed(),
+  )
 }
 
-fn at_index(min: usize, max: usize, c: char, s: &str) -> bool {
-  let first = s.chars().nth((min - 1 as usize) as usize).unwrap();
-  let second = s.chars().nth((max - 1 as usize) as usize).unwrap();
-  return first != second && (first == c || second == c);
-}
-
-fn part_one(input: &str) -> usize {
-  parse_input(input)
-    .iter()
-    .filter(|instruction| {
-      has_count(
-        instruction.min,
-        instruction.max,
-        instruction.c,
-        &*instruction.s,
-      )
-    })
-    .count()
-}
-
-fn part_two(input: &str) -> usize {
-  parse_input(input)
-    .iter()
-    .filter(|instruction| {
-      at_index(
-        instruction.min,
-        instruction.max,
-        instruction.c,
-        &*instruction.s,
-      )
-    })
-    .count()
+fn part_two(input: &str) -> (usize, Duration) {
+  let vec = parse_input(input);
+  let timer = Instant::now();
+  (
+    vec
+      .iter()
+      .filter(|policy| policy.password_has_valid_positions())
+      .count(),
+    timer.elapsed(),
+  )
 }
 
 fn main() {
   let input = read_input();
 
-  let p1_timer = Instant::now();
-  println!(
-    "part one {} {}ms",
-    part_one(&input),
-    p1_timer.elapsed().as_millis()
-  );
-  let p2_timer = Instant::now();
-  println!(
-    "part two {} {}ms",
-    part_two(&input),
-    p2_timer.elapsed().as_millis()
-  );
-  println!("total {}ms", p1_timer.elapsed().as_millis())
+  let p1 = part_one(&input);
+  println!("part two {:?} {:?}", p1.0, p1.1);
+  let p2 = part_two(&input);
+  println!("part two {:?} {:?}", p2.0, p2.1);
 }
 
 #[cfg(test)]
@@ -103,29 +100,30 @@ mod test {
 2-9 c: ccccccccc";
 
   #[test]
-  fn test_has_count() {
-    assert!(has_count(1, 3, 'a', "abcde"));
-    assert!(!has_count(1, 3, 'b', "cdefg"));
-    assert!(has_count(3, 3, 'c', "ccc"));
-    assert!(has_count(2, 9, 'c', "ccccccccc"));
+  fn test_password_has_valid_count() {
+    let policies = parse_input(TEST_INPUT);
+    assert!(policies[0].password_has_valid_count());
+    assert!(!policies[1].password_has_valid_count());
+    assert!(policies[2].password_has_valid_count());
   }
 
   #[test]
-  fn test_at_index() {
-    assert!(at_index(1, 3, 'a', "abcde"));
-    assert!(!at_index(1, 3, 'b', "cdefg"));
-    assert!(!at_index(1, 3, 'c', "ccccccccc"));
+  fn test_password_has_valid_positions() {
+    let policies = parse_input(TEST_INPUT);
+    assert!(policies[0].password_has_valid_positions());
+    assert!(!policies[1].password_has_valid_positions());
+    assert!(!policies[2].password_has_valid_positions());
   }
 
   #[test]
   fn test_part_one() {
-    assert_eq!(part_one(TEST_INPUT), 2);
-    assert_eq!(part_one(&read_input()), 500);
+    assert_eq!(part_one(TEST_INPUT).0, 2);
+    assert_eq!(part_one(&read_input()).0, 500);
   }
 
   #[test]
   fn test_part_two() {
-    assert_eq!(part_two(TEST_INPUT), 1);
-    assert_eq!(part_two(&read_input()), 313);
+    assert_eq!(part_two(TEST_INPUT).0, 1);
+    assert_eq!(part_two(&read_input()).0, 313);
   }
 }
