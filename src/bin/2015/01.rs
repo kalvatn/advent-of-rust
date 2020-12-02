@@ -1,12 +1,13 @@
 use common::io;
+use std::time::Instant;
 
-fn parse_directions(input: &str) -> Vec<char> {
-  return input.chars().collect();
+
+fn read_input() -> String {
+  return io::read_input("2015-01");
 }
 
-fn directions_to_int(directions: Vec<char>) -> Vec<i32> {
-  return directions
-    .iter()
+fn parse_input(input:&str) -> Vec<i32> {
+  return input.chars().into_iter()
     .map(|c| -> i32 {
       match c {
         '(' => 1,
@@ -17,12 +18,12 @@ fn directions_to_int(directions: Vec<char>) -> Vec<i32> {
     .collect();
 }
 
-fn part_one(directions: Vec<char>) -> i32 {
-  return directions_to_int(directions).iter().sum();
+fn part_one(input : &str) -> i32 {
+  return parse_input(input).iter().sum();
 }
 
-fn part_two(directions: Vec<char>) -> usize {
-  return directions_to_int(directions)
+fn part_two(input: &str) -> usize {
+  return parse_input(input)
     .iter()
     .scan(0, |acc, &n| {
       *acc = *acc + n;
@@ -34,10 +35,15 @@ fn part_two(directions: Vec<char>) -> usize {
 }
 
 fn main() {
-  let input = io::read_input("2015-01");
-  let directions: Vec<char> = parse_directions(&*input);
-  println!("{}", part_one(directions.clone()));
-  println!("{}", part_two(directions));
+  let input = read_input();
+  let time = Instant::now();
+  let p1 = part_one(&input);
+  let p1_time = time.elapsed();
+  let time = Instant::now();
+  let p2 = part_two(&input);
+  let p2_time = time.elapsed();
+  println!("part one {:?} {:?}", p1, p1_time);
+  println!("part two {:?} {:?}", p2, p2_time);
 }
 
 #[cfg(test)]
@@ -45,26 +51,23 @@ mod test {
   use super::*;
 
   #[test]
-  fn test_parse_directions() {
-    assert_eq!(parse_directions("(())"), vec!['(', '(', ')', ')']);
-  }
-
-  #[test]
   fn test_directions_to_int() {
     assert_eq!(
-      directions_to_int(vec!['(', '(', ')', ')']),
+      parse_input("(())"),
       vec![1, 1, -1, -1]
     );
   }
 
   #[test]
   fn test_part_one() {
-    assert_eq!(part_one(vec!['(', '(', ')', ')']), 0)
+    assert_eq!(part_one("(())"), 0);
+    assert_eq!(part_one(&read_input()), 138);
   }
 
   #[test]
   fn test_part_two() {
-    assert_eq!(part_two(vec![')']), 1);
-    assert_eq!(part_two(vec!['(', ')', '(', ')', ')']), 5);
+    assert_eq!(part_two(")"), 1);
+    assert_eq!(part_two("()())"), 5);
+    assert_eq!(part_two(&read_input()), 1771);
   }
 }
