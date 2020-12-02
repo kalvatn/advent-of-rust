@@ -1,13 +1,14 @@
 use common::io;
 use std::time::Instant;
 
-
 fn read_input() -> String {
   return io::read_input("2015-01");
 }
 
-fn parse_input(input:&str) -> Vec<i32> {
-  return input.chars().into_iter()
+fn parse_input(input: &str) -> Vec<i32> {
+  return input
+    .chars()
+    .into_iter()
     .map(|c| -> i32 {
       match c {
         '(' => 1,
@@ -18,7 +19,7 @@ fn parse_input(input:&str) -> Vec<i32> {
     .collect();
 }
 
-fn part_one(input : &str) -> i32 {
+fn part_one(input: &str) -> i32 {
   return parse_input(input).iter().sum();
 }
 
@@ -52,10 +53,7 @@ mod test {
 
   #[test]
   fn test_directions_to_int() {
-    assert_eq!(
-      parse_input("(())"),
-      vec![1, 1, -1, -1]
-    );
+    assert_eq!(parse_input("(())"), vec![1, 1, -1, -1]);
   }
 
   #[test]
