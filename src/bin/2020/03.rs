@@ -7,20 +7,23 @@ fn read_input() -> String {
 }
 
 fn parse_input(input: &str) -> Vec<Vec<bool>> {
-  let max_y = input.lines().count();
-  let max_x = input.lines().nth(0).unwrap().len();
-  let mut map = vec![vec![false; max_x]; max_y];
-  for (y, line) in input.lines().enumerate() {
-    for (x, col) in line.chars().enumerate() {
-      let tree = match col {
-        '.' => false,
-        '#' => true,
-        _ => panic!("impossiburu"),
-      };
-      map[y][x] = tree;
-    }
-  }
-  return map;
+  // let max_y = input.lines().count();
+  // let max_x = input.lines().nth(0).unwrap().len();
+  // let mut map = vec![vec![false; max_x]; max_y];
+  // for (y, line) in input.lines().enumerate() {
+  //   for (x, col) in line.chars().enumerate() {
+  //     let tree = match col {
+  //       '.' => false,
+  //       '#' => true,
+  //       _ => panic!("impossiburu"),
+  //     };
+  //     map[y][x] = tree;
+  //   }
+  // }
+  input
+    .lines()
+    .map(|l| l.chars().map(|c| c == '#').collect())
+    .collect()
 }
 
 fn trees_encountered_for_slope(map: &Vec<Vec<bool>>, slope: &(usize, usize)) -> u32 {
