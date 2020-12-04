@@ -13,102 +13,74 @@ fn read_input() -> String {
   return io::read_input("2020-04");
 }
 
-fn parse_input(input: &str) -> &str {
-  return input;
+fn parse_input(input: &str) -> Vec<&str> {
+  input.split("\n\n").collect()
 }
 
-fn is_valid(s: &str) -> bool {
-  let needed = vec!["byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"];
-  // "cid"];
-  for n in &needed {
-    if !s.contains(n) {
+fn has_required_fields(passport: &str) -> bool {
+  let required = vec!["byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"];
+  for n in &required {
+    if !passport.contains(n) {
       return false;
     }
   }
   return true;
 }
 
-fn part_one(input: &str) -> usize {
-  let mut count = 0;
-
-  let mut current = String::new();
-
-  for line in input.lines() {
-    if line.is_empty() {
-      if is_valid(&current) {
-        count += 1;
-      }
-      current = String::new();
-    }
-    for c in line.chars() {
-      current.push(c);
-    }
-  }
-  println!("{:?}", current);
-
-  if is_valid(&current) {
-    count += 1;
-  }
-  return count;
+fn valid_pid(pid: &str) -> bool {
+  pid.len() == 9 && pid.parse::<u32>().is_ok()
 }
 
-fn valid_pid(pid:&str) -> bool {
-  pid.trim().len() == 9 && pid.parse::<u32>().unwrap() >= 0
-}
-
-fn valid_hcl(hcl:&str) -> bool {
-  if !hcl.starts_with("#") {
-    false
-  } else {
+fn valid_hcl(hcl: &str) -> bool {
+  if hcl.starts_with("#") {
     let c = hcl.trim_start_matches("#");
-    return c.len() == 6 && c.chars().all(|c| c.is_ascii_hexdigit())
+    return c.len() == 6 && c.chars().all(|c| c.is_ascii_hexdigit());
   }
+  return false;
 }
 
-fn valid_ecl(ecl:&str) -> bool {
+fn valid_ecl(ecl: &str) -> bool {
   let valid = vec!["amb", "blu", "brn", "gry", "grn", "hzl", "oth"];
-  let mut count = 0;
-  for v in valid {
-    if ecl == v {
-      count += 1;
-    }
-  }
-  count == 1
+  ecl.len() == 3 && valid.contains(&ecl)
 }
-fn valid_hgt(hgt:&str) -> bool {
+fn valid_hgt(hgt: &str) -> bool {
   if hgt.ends_with("in") {
     let n = hgt.trim_end_matches("in").parse::<u8>().unwrap();
-    n >= 59 && n <= 76
+    return n >= 59 && n <= 76;
   } else if hgt.ends_with("cm") {
     let n = hgt.trim_end_matches("cm").parse::<u8>().unwrap();
-    n >= 150 && n <= 193
-  } else {
-    false
+    return n >= 150 && n <= 193;
   }
+  return false;
 }
 
-fn is_valid_2(s: &str) -> bool {
-  let needed = vec!["byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"];
-  println!("{:?}", s);
-  for pass in s.trim().split_whitespace() {
-    println!("pass {:?}", pass);
-    let split: Vec<&str> = pass.split(":").map(|it| it.trim()).into_iter().collect();
+fn valid_byr(byr: &str) -> bool {
+  let n = byr.parse::<u16>().unwrap();
+  n >= 1920 && n <= 2002
+}
+
+fn valid_iyr(iyr: &str) -> bool {
+  let n = iyr.parse::<u16>().unwrap();
+  n >= 2010 && n <= 2020
+}
+
+fn valid_eyr(eyr: &str) -> bool {
+  let n = eyr.parse::<u16>().unwrap();
+  n >= 2020 && n <= 2030
+}
+
+fn is_valid(passport: &str) -> bool {
+  if !has_required_fields(passport) {
+    return false;
+  }
+  for entries in passport.split_whitespace() {
+    let split: Vec<&str> = entries.split(":").into_iter().collect();
     let field = split[0];
     let val = split[1];
-    println!("field {:?} {:?}", field, val);
     let valid = match field {
-      "byr" => {
-        let n = val.parse::<u16>().unwrap();
-        n >= 1920 && n <= 2002
-      }
-      "iyr" => {
-        let n = val.parse::<u16>().unwrap();
-        n >= 2010 && n <= 2020
-      }
-      "eyr" => {
-        let n = val.parse::<u16>().unwrap();
-        n >= 2020 && n <= 2030
-      }
+      "byr" => valid_byr(val),
+      "iyr" => valid_iyr(val),
+      "eyr" => valid_eyr(val),
       "hgt" => valid_hgt(val),
       "hcl" => valid_hcl(val),
       "ecl" => valid_ecl(val),
@@ -120,36 +92,21 @@ fn is_valid_2(s: &str) -> bool {
       return false;
     }
   }
-  for n in &needed {
-    if !s.contains(n) {
-      return false;
-    }
-  }
   return true;
 }
 
+fn part_one(input: &str) -> usize {
+  parse_input(input)
+    .iter()
+    .filter(|passport| has_required_fields(passport))
+    .count()
+}
+
 fn part_two(input: &str) -> usize {
-  let mut count = 0;
-
-  let mut current = String::new();
-
-  for line in input.lines() {
-    if line.is_empty() {
-      if is_valid_2(&current) {
-        count += 1;
-      }
-      current = String::new();
-    }
-    for c in line.chars() {
-      current.push(c);
-    }
-    current.push(' ');
-  }
-
-  if is_valid_2(&current) {
-    count += 1;
-  }
-  return count;
+  parse_input(input)
+    .iter()
+    .filter(|passport| is_valid(passport))
+    .count()
 }
 
 fn main() {
@@ -185,16 +142,16 @@ hcl:#cfa07d eyr:2025 pid:166559648
 iyr:2011 ecl:brn hgt:59in";
 
   #[test]
-  fn test_is_valid() {
-    assert!(is_valid(
+  fn test_has_required_fields() {
+    assert!(has_required_fields(
       "ecl:gry pid:860033327 eyr:2020 hcl:#fffffd
 byr:1937 iyr:2017 cid:147 hgt:183cm"
     ));
-    assert!(!is_valid(
+    assert!(!has_required_fields(
       "iyr:2013 ecl:amb cid:350 eyr:2023 pid:028048884
 hcl:#cfa07d byr:1929"
     ));
-    assert!(is_valid(
+    assert!(has_required_fields(
       "hcl:#ae17e1 iyr:2013
 eyr:2024
 ecl:brn pid:760753108 byr:1931
@@ -203,16 +160,16 @@ hgt:179cm"
   }
 
   #[test]
-  fn test_is_valid_2() {
-    assert!(!is_valid_2(
+  fn test_is_valid() {
+    assert!(!is_valid(
       "eyr:1972 cid:100
 hcl:#18171d ecl:amb hgt:170 pid:186cm iyr:2018 byr:1926"
     ));
-    assert!(is_valid_2(
+    assert!(is_valid(
       "pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1980
 hcl:#623a2f"
     ));
-    assert!(is_valid_2(
+    assert!(is_valid(
       "pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1980
 hcl:#623a2f"
     ));
@@ -242,6 +199,12 @@ hcl:#623a2f"
     assert!(!valid_hgt("190in"));
     assert!(valid_hgt("190cm"));
     assert!(!valid_hgt("190"));
+  }
+
+  #[test]
+  fn test_valid_byr() {
+    assert!(valid_byr("2002"));
+    assert!(!valid_byr("2003"));
   }
 
   #[test]
