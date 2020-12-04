@@ -85,6 +85,10 @@ path = "src/bin/2020/03.rs"
 name = "2020-04"
 path = "src/bin/2020/04.rs"
 
+[[bin]]
+name = "2020-05"
+path = "src/bin/2020/05.rs"
+
 [dependencies]
 md5 = "0.7.0"
 futures = "0.3.5"
