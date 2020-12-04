@@ -52,6 +52,41 @@ fn part_one(input: &str) -> usize {
   return count;
 }
 
+fn valid_pid(pid:&str) -> bool {
+  pid.trim().len() == 9 && pid.parse::<u32>().unwrap() >= 0
+}
+
+fn valid_hcl(hcl:&str) -> bool {
+  if !hcl.starts_with("#") {
+    false
+  } else {
+    let c = hcl.trim_start_matches("#");
+    return c.len() == 6 && c.chars().all(|c| c.is_ascii_hexdigit())
+  }
+}
+
+fn valid_ecl(ecl:&str) -> bool {
+  let valid = vec!["amb", "blu", "brn", "gry", "grn", "hzl", "oth"];
+  let mut count = 0;
+  for v in valid {
+    if ecl == v {
+      count += 1;
+    }
+  }
+  count == 1
+}
+fn valid_hgt(hgt:&str) -> bool {
+  if hgt.ends_with("in") {
+    let n = hgt.trim_end_matches("in").parse::<u8>().unwrap();
+    n >= 59 && n <= 76
+  } else if hgt.ends_with("cm") {
+    let n = hgt.trim_end_matches("cm").parse::<u8>().unwrap();
+    n >= 150 && n <= 193
+  } else {
+    false
+  }
+}
+
 fn is_valid_2(s: &str) -> bool {
   let needed = vec!["byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"];
   println!("{:?}", s);
@@ -74,34 +109,10 @@ fn is_valid_2(s: &str) -> bool {
         let n = val.parse::<u16>().unwrap();
         n >= 2020 && n <= 2030
       }
-      "hgt" => {
-        if val.ends_with("in") {
-          let n = val.trim_end_matches("in").parse::<u8>().unwrap();
-          n >= 59 && n <= 76
-        } else {
-          let n = val.trim_end_matches("cm").parse::<u8>().unwrap();
-          n >= 150 && n <= 193
-        }
-      }
-      "hcl" => {
-        if !val.starts_with("#") {
-          false
-        } else {
-          let c = val.trim_start_matches("#");
-          c.len() == 6 && c.chars().all(|c| c.is_alphanumeric())
-        }
-      }
-      "ecl" => {
-        let valid = vec!["amb", "blu", "brn", "gry", "grn", "hzl", "oth"];
-        let mut count = 0;
-        for v in valid {
-          if val == v {
-            count += 1;
-          }
-        }
-        count == 1
-      }
-      "pid" => val.trim().len() == 9 && val.parse::<u32>().unwrap() >= 0,
+      "hgt" => valid_hgt(val),
+      "hcl" => valid_hcl(val),
+      "ecl" => valid_ecl(val),
+      "pid" => valid_pid(val),
       "cid" => true,
       _ => panic!("impossiburu"),
     };
@@ -187,8 +198,7 @@ hcl:#cfa07d byr:1929"
       "hcl:#ae17e1 iyr:2013
 eyr:2024
 ecl:brn pid:760753108 byr:1931
-hgt:179cm
-"
+hgt:179cm"
     ));
   }
 
@@ -206,6 +216,32 @@ hcl:#623a2f"
       "pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1980
 hcl:#623a2f"
     ));
+  }
+
+  #[test]
+  fn test_valid_pid() {
+    assert!(valid_pid("000000001"));
+    assert!(!valid_pid("0123456789"));
+  }
+
+  #[test]
+  fn test_valid_hcl() {
+    assert!(valid_hcl("#123abc"));
+    assert!(!valid_hcl("#123abz"));
+  }
+
+  #[test]
+  fn test_valid_ecl() {
+    assert!(valid_ecl("hzl"));
+    assert!(!valid_ecl("wat"));
+  }
+
+  #[test]
+  fn test_valid_hgt() {
+    assert!(valid_hgt("60in"));
+    assert!(!valid_hgt("190in"));
+    assert!(valid_hgt("190cm"));
+    assert!(!valid_hgt("190"));
   }
 
   #[test]
