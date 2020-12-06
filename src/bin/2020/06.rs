@@ -1,13 +1,9 @@
-#![allow(unused_variables, unused_imports, dead_code)]
-
 use std::collections::{HashMap, HashSet};
 use std::time::Instant;
 
-use itertools::Itertools;
-use lazy_static::lazy_static;
-use regex::Regex;
-
 use common::io;
+use itertools::__std_iter::FromIterator;
+use std::slice::SliceIndex;
 
 fn read_input() -> String {
   return io::read_input("2020-06");
@@ -18,72 +14,45 @@ fn parse_input(input: &str) -> Vec<&str> {
 }
 
 fn part_one(input: &str) -> usize {
-  let mut lines = input.lines().into_iter();
-  let mut answer = 0;
-  let mut lol: HashSet<char> = HashSet::new();
-  while let Some(l) = lines.next() {
-    println!("{}", l);
-    if l.is_empty() {
-      println!("{:?}", lol);
-      answer += lol.len();
-      lol = HashSet::new();
-    }
-    let mut chars: Vec<char> = l.chars().into_iter().collect();
-
-    for c in chars {
-      lol.insert(c);
-    }
-    // for i in 0..count {
-    //   let a = lines.next().unwrap();
-    //   assert_eq!(a.len(), 1);
-    // }
-  }
-  answer += lol.len();
-  return answer;
+  // let mut count = 0;
+  // let mut yes: HashSet<char> = HashSet::new();
+  // for l in input.lines() {
+  //   if l.is_empty() {
+  //     count += yes.len();
+  //     yes.clear()
+  //   }
+  //   for c in l.chars() {
+  //     yes.insert(c);
+  //   }
+  // }
+  // count += yes.len();
+  // return count;
+  input.split("\n\n").fold(0, |acc, line| {
+    let map = line.lines().flat_map(|l| l.chars().into_iter());
+    let set = HashSet::<char>::from_iter(map);
+    acc + set.len()
+  })
 }
 
 fn part_two(input: &str) -> usize {
-  let mut lines = input.lines().into_iter();
-  let mut answer = 0;
+  let mut count = 0;
   let mut people = 0;
-  let mut lol: HashMap<char, usize> = HashMap::new();
-  while let Some(l) = lines.next() {
+  let mut yes_by_q: HashMap<char, usize> = HashMap::new();
+  for l in input.lines() {
     if l.is_empty() {
-      let questions = lol.keys().len();
-      println!("{:?}, people {:?}, questions {:?}", lol, people, questions);
-      for (k, v) in lol {
-        if v == people {
-          println!("{}", people);
-          answer += 1;
-        }
-      }
+      count += &yes_by_q.values().filter(|v| v == &&people).count();
       people = 0;
-      lol = HashMap::new();
-      println!("{}", l);
+      yes_by_q.clear();
     } else {
-      let mut chars: Vec<char> = l.chars().into_iter().collect();
       people += 1;
-
-      for c in chars {
-        if lol.contains_key(&c) {
-          let count = lol.get(&c).unwrap();
-          lol.insert(c, count + 1);
-        } else {
-          lol.insert(c, 1);
-        }
-        lol.entry(c).or_insert(1);
+      for c in l.chars() {
+        let count = **&yes_by_q.entry(c).or_insert(0);
+        yes_by_q.insert(c, count + 1);
       }
     }
   }
-  let questions = lol.keys().len();
-  println!("{:?}, people {:?}, questions {:?}", lol, people, questions);
-  for (k, v) in lol {
-    if v == people {
-      println!("{}", people);
-      answer += 1;
-    }
-  }
-  return answer;
+  count += &yes_by_q.values().filter(|v| v == &&people).count();
+  return count;
 }
 
 fn main() {
