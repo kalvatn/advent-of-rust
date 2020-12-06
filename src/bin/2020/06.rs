@@ -2,15 +2,10 @@ use std::collections::{HashMap, HashSet};
 use std::time::Instant;
 
 use common::io;
-use itertools::__std_iter::FromIterator;
-use std::slice::SliceIndex;
+use std::iter::FromIterator;
 
 fn read_input() -> String {
   return io::read_input("2020-06");
-}
-
-fn parse_input(input: &str) -> Vec<&str> {
-  input.split("\n\n").collect()
 }
 
 fn part_one(input: &str) -> usize {
@@ -35,24 +30,36 @@ fn part_one(input: &str) -> usize {
 }
 
 fn part_two(input: &str) -> usize {
-  let mut count = 0;
-  let mut people = 0;
-  let mut yes_by_q: HashMap<char, usize> = HashMap::new();
-  for l in input.lines() {
-    if l.is_empty() {
-      count += &yes_by_q.values().filter(|v| v == &&people).count();
-      people = 0;
-      yes_by_q.clear();
-    } else {
-      people += 1;
-      for c in l.chars() {
-        let count = **&yes_by_q.entry(c).or_insert(0);
-        yes_by_q.insert(c, count + 1);
-      }
+  // let mut count = 0;
+  // let mut people = 0;
+  // let mut yes_by_q: HashMap<char, usize> = HashMap::new();
+  // for l in input.lines() {
+  //   if l.is_empty() {
+  //     count += &yes_by_q.values().filter(|v| v == &&people).count();
+  //     people = 0;
+  //     yes_by_q.clear();
+  //   } else {
+  //     people += 1;
+  //     for c in l.chars() {
+  //       let count = **&yes_by_q.entry(c).or_insert(0);
+  //       yes_by_q.insert(c, count + 1);
+  //     }
+  //   }
+  // }
+  // count += &yes_by_q.values().filter(|v| v == &&people).count();
+  // return count;
+  input.split("\n\n").fold(0, |acc, group| {
+    let answers_per_person = group.lines();
+    let people = group.lines().count();
+    let all_answers = answers_per_person
+      .flat_map(|l| l.chars())
+      .collect::<Vec<char>>();
+    let mut map = HashMap::<char, usize>::new();
+    for c in all_answers {
+      *map.entry(c).or_insert(0) += 1
     }
-  }
-  count += &yes_by_q.values().filter(|v| v == &&people).count();
-  return count;
+    acc + map.values().filter(|v| **v == people).count()
+  })
 }
 
 fn main() {
