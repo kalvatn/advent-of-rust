@@ -16,7 +16,7 @@ use std::time::Instant;
 use common::io;
 
 fn read_input() -> String {
-  return io::read_input("2020-DD");
+  return io::read_input("2020-08");
 }
 
 fn parse_input(input: &str) -> &str {
