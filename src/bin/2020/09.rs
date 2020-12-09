@@ -9,51 +9,59 @@ fn read_input() -> String {
 }
 
 fn parse_input(input: &str) -> Vec<u64> {
-  return input.lines().map(|l| l.parse::<u64>().unwrap()).collect();
+  return input
+    .lines()
+    .map(|line| line.parse::<u64>().unwrap())
+    .collect();
 }
 
-fn find_invalid(numbers: Vec<u64>, length: usize) -> u64 {
-  let chunks = numbers.windows(length);
-  for (i, preamble) in chunks.enumerate() {
-    let sums = preamble
+fn find_invalid(numbers: &Vec<u64>, length: usize) -> u64 {
+  for (i, preamble) in numbers.windows(length).enumerate() {
+    let next_number = &numbers[i + length];
+    if preamble
       .into_iter()
       .combinations_with_replacement(2)
       .map(|c| *c.first().unwrap() + *c.last().unwrap())
-      .collect::<Vec<u64>>();
-    let x = &numbers[i + length];
-    if !sums.contains(&x) {
-      return *x;
+      .all(|s| s != *next_number)
+    {
+      return *next_number;
     }
   }
   unreachable!("impossiburu")
 }
 
-fn part_one(input: &str) -> u64 {
-  let numbers = parse_input(input);
+fn part_one(numbers: &Vec<u64>) -> u64 {
   find_invalid(numbers, 25)
 }
 
-fn part_two(input: &str, p1: u64) -> u64 {
-  let numbers = parse_input(input);
-  for i in 0..numbers.len() {
-    for j in i + 1..numbers.len() {
-      let slice = &numbers[i..j];
-      let sum = slice.iter().sum::<u64>();
-      if sum > p1 {
-        continue;
+fn range_for_sum(numbers: &Vec<u64>, target: u64) -> Result<(usize, usize), &'static str> {
+  let size = numbers.len();
+  for i in 0..size {
+    let mut sum = 0;
+    let mut j = i;
+    while j < size && sum < target {
+      sum += numbers[j];
+      if sum == target {
+        return Ok((i, j));
       }
-      if sum == p1 {
-        let min = *slice.iter().min().unwrap();
-        let max = *slice.iter().max().unwrap();
-        return min + max;
-      }
+      j += 1;
     }
   }
-  return 0;
+  return Err("no range found");
+}
+
+fn part_two(numbers: &Vec<u64>, p1: u64) -> u64 {
+  let (start, end) = range_for_sum(numbers, p1).unwrap();
+  let slice = &numbers[start..end];
+  let min = *slice.iter().min().unwrap();
+  let max = *slice.iter().max().unwrap();
+  return min + max;
 }
 
 fn main() {
-  let input = read_input();
+  let time = Instant::now();
+  let input = parse_input(&read_input());
+  let parse_time = time.elapsed();
 
   let time = Instant::now();
   let p1 = part_one(&input);
@@ -62,6 +70,7 @@ fn main() {
   let time = Instant::now();
   let p2 = part_two(&input, p1);
   let p2_time = time.elapsed();
+  println!("parse {:?}", parse_time);
   println!("part one {:?} {:?}", p1, p1_time);
   println!("part two {:?} {:?}", p2, p2_time);
 }
@@ -92,18 +101,27 @@ mod test {
 576";
 
   #[test]
-  fn test_process_preamble() {
-    assert_eq!(find_invalid(parse_input(TEST_INPUT), 5), 127);
+  fn test_find_invalid() {
+    assert_eq!(find_invalid(&parse_input(TEST_INPUT), 5), 127);
+  }
+
+  #[test]
+  fn test_range_for_sum() {
+    assert_eq!(range_for_sum(&vec![1, 2, 3, 4], 6), Ok((0, 2)));
+    assert_eq!(range_for_sum(&vec![1, 2, 3, 4], 3), Ok((0, 1)));
+    assert_eq!(range_for_sum(&vec![1, 2, 3, 4], 7), Ok((2, 3)));
+    assert_eq!(range_for_sum(&vec![1, 2, 3, 4], 10), Ok((0, 3)));
+    assert_eq!(range_for_sum(&vec![1, 2, 3, 4], 8), Err("no range found"));
   }
 
   #[test]
   fn test_part_one() {
-    assert_eq!(part_one(&read_input()), 31161678);
+    assert_eq!(part_one(&parse_input(&read_input())), 31161678);
   }
 
   #[test]
   fn test_part_two() {
-    assert_eq!(part_two(TEST_INPUT, 127), 62);
-    assert_eq!(part_two(&read_input(), 31161678), 5453868);
+    assert_eq!(part_two(&parse_input(TEST_INPUT), 127), 62);
+    assert_eq!(part_two(&parse_input(&read_input()), 31161678), 5453868);
   }
 }
