@@ -1,8 +1,7 @@
-use std::time::Instant;
-
 use itertools::Itertools;
 
 use common::io;
+use common::timing::benchmark;
 
 fn read_input() -> String {
   return io::read_input("2020-09");
@@ -59,20 +58,13 @@ fn part_two(numbers: &Vec<u64>, p1: u64) -> u64 {
 }
 
 fn main() {
-  let time = Instant::now();
-  let input = parse_input(&read_input());
-  let parse_time = time.elapsed();
-
-  let time = Instant::now();
-  let p1 = part_one(&input);
-  let p1_time = time.elapsed();
-
-  let time = Instant::now();
-  let p2 = part_two(&input, p1);
-  let p2_time = time.elapsed();
-  println!("parse {:?}", parse_time);
-  println!("part one {:?} {:?}", p1, p1_time);
-  println!("part two {:?} {:?}", p2, p2_time);
+  let benchmark_iter = 100;
+  let (input, parse_time) = benchmark(benchmark_iter, || parse_input(&read_input()));
+  let (p1, p1_time) = benchmark(benchmark_iter, || part_one(&input));
+  let (p2, p2_time) = benchmark(benchmark_iter, || part_two(&input, p1));
+  println!("{:19} {:^?}", "parse", parse_time);
+  println!("{:8} {:10?} {:?}", "part one", p1, p1_time);
+  println!("{:8} {:10?} {:?}", "part two", p2, p2_time);
 }
 
 #[cfg(test)]
