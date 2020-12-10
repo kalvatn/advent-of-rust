@@ -1,56 +1,33 @@
-#![allow(
-  unused_variables,
-  unused_imports,
-  unused_assignments,
-  dead_code,
-  deprecated,
-  unused_parens
-)]
-
-use itertools::Itertools;
-use lazy_static::lazy_static;
-use regex::Regex;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::time::Instant;
 
+use itertools::Itertools;
+
 use common::io;
-use std::str::FromStr;
-use std::string::ParseError;
-
-enum Op {
-  Jmp,
-  Nop,
-  Acc,
-}
-
-struct Instruction {
-  op: Op,
-  val: i32,
-}
 
 fn read_input() -> String {
   return io::read_input("2020-10");
 }
 
-fn parse_input(input: &str) -> Vec<u32> {
-  return input
+fn parse_input(input: &str) -> Vec<u8> {
+  let mut numbers: Vec<u8> = input
     .lines()
-    .map(|line| line.parse::<u32>().unwrap())
+    .map(|line| line.parse::<u8>().unwrap())
     .collect();
+  let max = *numbers.iter().max().unwrap();
+  numbers.push(0);
+  numbers.push(max + 3);
+  numbers.sort();
+  return numbers;
 }
 
-fn find_joltage_diffs(input: &str) -> (u32, u32) {
-  let mut numbers = parse_input(input);
-  let max = *numbers.iter().max().unwrap();
-  numbers.sort();
-  numbers.push(max + 3);
+fn find_joltage_diffs(input: &str) -> (u8, u8) {
+  let numbers = parse_input(input);
   let (mut one, mut three) = (0, 0);
   let mut rating = 0;
   for i in 0..numbers.len() {
     let adapter = numbers[i] as i32;
-    let diff: i32 = (adapter as i32 - rating as i32) as i32;
-    println!("{} {}", adapter, diff);
-
+    let diff = adapter as i32 - rating;
     if diff == 1 {
       one += 1;
     }
@@ -62,7 +39,24 @@ fn find_joltage_diffs(input: &str) -> (u32, u32) {
   return (one, three);
 }
 
-fn find_adapter_arrangements(input: &str) -> u64 {
+fn find_adapter_arrangements(numbers: &Vec<u8>) -> u64 {
+  let mut counts: HashMap<u8, u64> = HashMap::new();
+  counts.insert(0, 1);
+
+  for n in numbers.into_iter().dropping(1) {
+    let mut count = 0;
+    for i in 1..=3 {
+      if n >= &i {
+        count += counts.get(&(n - i)).unwrap_or(&0);
+      }
+    }
+    counts.insert(*n, count);
+  }
+  *counts.get(numbers.last().unwrap()).unwrap()
+}
+
+#[allow(unused)]
+fn find_adapter_arrangements_oom(input: &str) -> u64 {
   let mut numbers = parse_input(input);
   let max = *numbers.iter().max().unwrap();
   let min = *numbers.iter().min().unwrap();
@@ -71,9 +65,8 @@ fn find_adapter_arrangements(input: &str) -> u64 {
   numbers.sort();
   numbers.reverse();
 
-  let mut queue: VecDeque<(usize, Vec<u32>)> = VecDeque::new();
-  let mut seen: HashSet<Vec<u32>> = HashSet::new();
-  let mut valid: HashSet<Vec<u32>> = HashSet::new();
+  let mut queue: VecDeque<(usize, Vec<u8>)> = VecDeque::new();
+  let mut seen: HashSet<Vec<u8>> = HashSet::new();
   let mut valid: u64 = 0;
   queue.push_back((0, vec![numbers[0]]));
   while !queue.is_empty() {
@@ -101,18 +94,18 @@ fn find_adapter_arrangements(input: &str) -> u64 {
   valid
 }
 
-fn part_one(input: &str) -> u32 {
+fn part_one(input: &str) -> u16 {
   let (one, three) = find_joltage_diffs(input);
-  return one * three;
+  return one as u16 * three as u16;
 }
 
-fn part_two(input: &str) -> usize {
-  return find_adapter_arrangements(input) as usize;
+fn part_two(input: &str) -> u64 {
+  let numbers = parse_input(input);
+  return find_adapter_arrangements(&numbers);
 }
 
 fn main() {
   let input = read_input();
-  println!("{:?}", input);
 
   let time = Instant::now();
   let p1 = part_one(&input);
@@ -181,20 +174,30 @@ mod test {
 
   #[test]
   fn test_find_adapter_arr() {
-    assert_eq!(find_adapter_arrangements(TEST_INPUT), 8);
-    assert_eq!(find_adapter_arrangements(TEST_INPUT_2), 19208);
+    assert_eq!(find_adapter_arrangements(&vec![0, 1]), 1);
+    assert_eq!(find_adapter_arrangements(&vec![0, 3]), 1);
+    assert_eq!(find_adapter_arrangements(&vec![0, 3, 5]), 1);
+    assert_eq!(find_adapter_arrangements(&vec![0, 1, 2, 3]), 4);
+    assert_eq!(find_adapter_arrangements(&vec![0, 1, 2, 3, 4]), 7);
+    assert_eq!(find_adapter_arrangements(&vec![0, 1, 2, 3, 4, 5]), 13);
+    assert_eq!(find_adapter_arrangements(&vec![0, 3, 4, 5, 8]), 2);
+    assert_eq!(find_adapter_arrangements(&vec![0, 3, 4, 5, 6, 8]), 6);
+    assert_eq!(find_adapter_arrangements(&parse_input(TEST_INPUT)), 8);
+    assert_eq!(find_adapter_arrangements(&parse_input(TEST_INPUT_2)), 19208);
+    assert_eq!(find_adapter_arrangements_oom(TEST_INPUT_2), 19208);
   }
+
   #[test]
   fn test_part_one() {
     assert_eq!(part_one(TEST_INPUT), 7 * 5);
     assert_eq!(part_one(TEST_INPUT_2), 22 * 10);
-    // assert_eq!(part_one(&read_input()), 0);
+    assert_eq!(part_one(&read_input()), 2100);
   }
 
   #[test]
   fn test_part_two() {
     assert_eq!(part_two(TEST_INPUT), 8);
-    // assert_eq!(part_two(TEST_INPUT_2), 19208);
-    // assert_eq!(part_two(&read_input()), 0);
+    assert_eq!(part_two(TEST_INPUT_2), 19208);
+    assert_eq!(part_two(&read_input()), 16198260678656);
   }
 }
