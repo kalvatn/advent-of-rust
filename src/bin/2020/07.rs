@@ -1,14 +1,11 @@
-#![allow(unused_variables, unused_imports)]
-
-use itertools::Itertools;
-use lazy_static::lazy_static;
-use regex::Regex;
+use std::borrow::BorrowMut;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::time::Instant;
 
+use lazy_static::lazy_static;
+use regex::Regex;
+
 use common::io;
-use std::borrow::{Borrow, BorrowMut};
-use std::collections::hash_map::RandomState;
 
 #[derive(Debug)]
 struct Bag {
@@ -72,7 +69,7 @@ fn part_one(input: &str) -> usize {
         .insert(x.name.to_string());
     }
   }
-  for (k, mut v) in bag_map.borrow_mut() {
+  for (k, v) in bag_map.borrow_mut() {
     if contained_by.contains_key(k) {
       for x in contained_by.get(k).unwrap() {
         v.contained_by.push(x.to_string());
@@ -136,7 +133,7 @@ fn part_two(input: &str) -> usize {
     println!("{:?}", bag);
     for (k, v) in &bag.contains {
       count += v;
-      for i in 0..*v {
+      for _i in 0..*v {
         queue.push_back(bag_map.get(k).unwrap())
       }
     }
