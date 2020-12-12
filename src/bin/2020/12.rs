@@ -1,8 +1,10 @@
-use itertools::Itertools;
 use std::time::Instant;
 
-use crate::Direction::{EAST, FORWARD, LEFT, NORTH, RIGHT, SOUTH, WEST};
+use itertools::Itertools;
+
 use common::io;
+
+use crate::Direction::{EAST, FORWARD, LEFT, NORTH, RIGHT, SOUTH, WEST};
 
 #[derive(Eq, PartialEq, Debug, Copy, Clone, Hash)]
 enum Direction {
@@ -18,131 +20,106 @@ enum Direction {
 impl From<char> for Direction {
   fn from(c: char) -> Direction {
     match c {
-      'N' => Direction::NORTH,
-      'S' => Direction::SOUTH,
-      'E' => Direction::EAST,
-      'W' => Direction::WEST,
-      'L' => Direction::LEFT,
-      'R' => Direction::RIGHT,
-      'F' => Direction::FORWARD,
+      'N' => NORTH,
+      'S' => SOUTH,
+      'E' => EAST,
+      'W' => WEST,
+      'L' => LEFT,
+      'R' => RIGHT,
+      'F' => FORWARD,
       _ => unreachable!("invalid direction"),
     }
   }
 }
 
 #[derive(Eq, PartialEq, Hash, Clone, Copy, Debug)]
-struct Point {
+struct Ship {
   facing: Direction,
+  pos: Point,
+}
+
+impl Ship {
+  fn mv(&mut self, dir: &Direction, steps: usize) -> Ship {
+    for _i in 0..steps {
+      match dir {
+        LEFT => match &self.facing {
+          NORTH => self.facing = WEST,
+          SOUTH => self.facing = EAST,
+          EAST => self.facing = NORTH,
+          WEST => self.facing = SOUTH,
+          _ => unreachable!(),
+        },
+        RIGHT => match self.facing {
+          NORTH => self.facing = EAST,
+          SOUTH => self.facing = WEST,
+          EAST => self.facing = SOUTH,
+          WEST => self.facing = NORTH,
+          _ => unreachable!(),
+        },
+        FORWARD => {
+          self.pos = self.pos.mv(&self.facing);
+        }
+        _ => {
+          self.pos = self.pos.mv(dir);
+        }
+      }
+    }
+    *self
+  }
+  fn mv_towards_waypoint(&mut self, waypoint: &Point, steps: usize) -> Ship {
+    for _i in 0..steps {
+      self.pos.x += waypoint.x;
+      self.pos.y += waypoint.y;
+    }
+    *self
+  }
+}
+
+#[derive(Eq, PartialEq, Hash, Clone, Copy, Debug)]
+struct Point {
   x: isize,
   y: isize,
 }
 
 impl Point {
-  fn mv(self, dir: &Direction) -> Point {
-    return match dir {
-      Direction::NORTH => Point {
-        facing: self.facing,
-        x: self.x,
-        y: self.y - 1,
-      },
-      Direction::SOUTH => Point {
-        facing: self.facing,
-        x: self.x,
-        y: self.y + 1,
-      },
-      Direction::WEST => Point {
-        facing: self.facing,
-        x: self.x - 1,
-        y: self.y,
-      },
-      Direction::EAST => Point {
-        facing: self.facing,
-        x: self.x + 1,
-        y: self.y,
-      },
-      Direction::LEFT => match self.facing {
-        Direction::NORTH => Point {
-          x: self.x,
-          y: self.y,
-          facing: WEST,
-        },
-        Direction::SOUTH => Point {
-          x: self.x,
-          y: self.y,
-          facing: EAST,
-        },
-        Direction::EAST => Point {
-          x: self.x,
-          y: self.y,
-          facing: NORTH,
-        },
-        Direction::WEST => Point {
-          x: self.x,
-          y: self.y,
-          facing: SOUTH,
-        },
-        Direction::LEFT => unreachable!("impossiburu"),
-        Direction::RIGHT => unreachable!("impossiburu"),
-        Direction::FORWARD => unreachable!("impossiburu"),
-      },
-      Direction::RIGHT => match self.facing {
-        Direction::NORTH => Point {
-          x: self.x,
-          y: self.y,
-          facing: EAST,
-        },
-        Direction::SOUTH => Point {
-          x: self.x,
-          y: self.y,
-          facing: WEST,
-        },
-        Direction::EAST => Point {
-          x: self.x,
-          y: self.y,
-          facing: SOUTH,
-        },
-        Direction::WEST => Point {
-          x: self.x,
-          y: self.y,
-          facing: NORTH,
-        },
-        Direction::LEFT => unreachable!("impossiburu"),
-        Direction::RIGHT => unreachable!("impossiburu"),
-        Direction::FORWARD => unreachable!("impossiburu"),
-      },
-      Direction::FORWARD => match self.facing {
-        Direction::NORTH => Point {
-          x: self.x,
-          y: self.y - 1,
-          facing: NORTH,
-        },
-        Direction::SOUTH => Point {
-          x: self.x,
-          y: self.y + 1,
-          facing: SOUTH,
-        },
-        Direction::EAST => Point {
-          x: self.x + 1,
-          y: self.y,
-          facing: EAST,
-        },
-        Direction::WEST => Point {
-          x: self.x - 1,
-          y: self.y,
-          facing: WEST,
-        },
-        Direction::LEFT => unreachable!("impossiburu"),
-        Direction::RIGHT => unreachable!("impossiburu"),
-        Direction::FORWARD => unreachable!("impossiburu"),
-      },
-    };
+  fn distance(&self, other: Point) -> usize {
+    (self.x.abs() + other.x.abs() + self.y.abs() + other.y.abs()) as usize
   }
-  fn mv_to_waypoint(self, waypoint:&Point) -> Point {
-      Point {
-        x: self.x + waypoint.x,
-        y: self.y + waypoint.y,
-        facing: NORTH,
+  fn mv(&mut self, dir: &Direction) -> Point {
+    match dir {
+      NORTH => self.y -= 1,
+      SOUTH => self.y += 1,
+      WEST => self.x -= 1,
+      EAST => self.x += 1,
+      _ => unreachable!(),
+    };
+    return *self;
+  }
+  fn rotate(&mut self, dir: &Direction, degrees: isize) -> Point {
+    let angle = if dir == &LEFT { degrees * -1 } else { degrees };
+    let current = *self;
+    let quarter_rotations = angle / 90;
+    match quarter_rotations.rem_euclid(4) {
+      1 => {
+        // LEFT 270 | RIGHT 90 , flip and invert horizontal
+        self.x = -current.y;
+        self.y = current.x;
       }
+      2 => {
+        // 180 noflip, invert both
+        self.x = -current.x;
+        self.y = -current.y;
+      }
+      3 => {
+        // RIGHT 270 | LEFT 90, flip and invert vertical
+        self.x = current.y;
+        self.y = -current.x;
+      }
+      _ => {
+        // 360
+      }
+    };
+    return *self;
   }
 }
 
@@ -166,91 +143,53 @@ fn parse_input(input: &str) -> Vec<Instruction> {
     .collect();
 }
 
-fn get_repeat(instruction: &Instruction) -> usize {
+fn angle_to_steps(instruction: &Instruction) -> usize {
   match instruction.direction {
-    LEFT => instruction.steps / 90,
-    RIGHT => instruction.steps / 90,
+    LEFT | RIGHT => instruction.steps / 90,
     _ => instruction.steps,
   }
 }
 
 fn part_one(input: &str) -> usize {
   let instructions = parse_input(input);
-  let p0 = Point {
-    x: 0,
-    y: 0,
-    facing: Direction::EAST,
+  let original_pos = Point { x: 0, y: 0 };
+  let mut ship = Ship {
+    pos: original_pos,
+    facing: EAST,
   };
-  let mut pos = p0;
   for instruction in instructions {
-    let steps = get_repeat(&instruction);
-    for _i in 0..steps {
-      pos = pos.mv(&instruction.direction);
-    }
+    let steps = angle_to_steps(&instruction);
+    ship.mv(&instruction.direction, steps);
   }
-
-  let horizontal = (pos.x.abs() + p0.x.abs()) as usize;
-  let vertical = (pos.y.abs() + p0.y.abs()) as usize;
-  (horizontal + vertical) as usize
+  ship.pos.distance(original_pos)
 }
 
 fn part_two(input: &str) -> usize {
   let instructions = parse_input(input);
-  let p0 = Point {
-    x: 0,
-    y: 0,
-    facing: Direction::EAST,
+  let original_pos = Point { x: 0, y: 0 };
+  let mut ship = Ship {
+    pos: original_pos,
+    facing: EAST,
   };
-  let mut pos = p0;
-  let mut waypoint = Point { facing: Direction::EAST, x: 10, y : -1};
+  let mut waypoint = Point { x: 10, y: -1 };
   for instruction in instructions {
-    let steps = get_repeat(&instruction);
+    let steps = angle_to_steps(&instruction);
     match instruction.direction {
-      NORTH|SOUTH|EAST|WEST => {
+      NORTH | SOUTH | EAST | WEST => {
         for _i in 0..steps {
-          waypoint = waypoint.mv(&instruction.direction);
+          waypoint.mv(&instruction.direction);
         }
-      },
-      LEFT|RIGHT => {
-          waypoint = rotate_waypoint(waypoint, instruction.direction, instruction.steps as isize);
+      }
+      LEFT | RIGHT => {
+        waypoint.rotate(&instruction.direction, instruction.steps as isize);
       }
       FORWARD => {
-        for _i in 0..steps {
-          pos = pos.mv_to_waypoint(&waypoint);
-        }
+        ship.mv_towards_waypoint(&waypoint, steps);
       }
     }
   }
 
-  let horizontal = (pos.x.abs() + p0.x.abs()) as usize;
-  let vertical = (pos.y.abs() + p0.y.abs()) as usize;
-  (horizontal + vertical) as usize
-}
-
-fn rotate_waypoint(waypoint:Point, dir: Direction, angle:isize) -> Point {
-  let times = if dir == LEFT { -angle / 90 } else { angle / 90};
-
-
-  let mut new_waypoint = waypoint;
-  for _i in 0..times.abs() {
-    new_waypoint = new_waypoint.mv(&dir);
-  }
-  match times.rem_euclid(4) {
-    1 => {
-      new_waypoint.x = -waypoint.y;
-      new_waypoint.y = waypoint.x;
-    }
-    2 => {
-      new_waypoint.x = -waypoint.x;
-      new_waypoint.y = -waypoint.y;
-    }
-    3 => {
-      new_waypoint.x = waypoint.y;
-      new_waypoint.y = -waypoint.x;
-    }
-    _ => {}
-  };
-  return new_waypoint;
+  ship.pos.distance(original_pos)
 }
 
 fn main() {
@@ -279,59 +218,44 @@ F11
 ";
 
   #[test]
-  fn test_get_repeat() {
+  fn test_angle_to_steps() {
     let instruction = Instruction {
       direction: LEFT,
       steps: 270,
     };
-    let mut pos = Point {
-      x: 0,
-      y: 0,
-      facing: NORTH,
+    let mut pos = Ship {
+      pos: Point { x: 0, y: 0 },
+      facing: EAST,
     };
     println!("{:?}", pos);
-    let repeat = get_repeat(&instruction);
+    let repeat = angle_to_steps(&instruction);
     assert_eq!(repeat, 3);
-    for _i in 0..repeat {
-      pos = pos.mv(&instruction.direction);
-      println!("{:?}", pos);
-    }
+    pos = pos.mv(&instruction.direction, repeat);
     assert_eq!(
       pos,
-      Point {
-        x: 0,
-        y: 0,
-        facing: EAST
+      Ship {
+        pos: Point { x: 0, y: 0 },
+        facing: SOUTH,
       }
     )
   }
 
   #[test]
-  fn test_rotate_waypoint() {
-    let waypoint = Point { x : 10, y: -4, facing : EAST};
-    let actual = rotate_waypoint(waypoint, Direction::RIGHT, 90);
-    let expected = Point { x: 4, y: 10, facing: SOUTH};
-    assert_eq!(actual, expected);
+  fn test_point_rotation() {
+    let mut p = Point { x: 10, y: -4 };
+    assert_eq!(p.rotate(&RIGHT, 90), Point { x: 4, y: 10 });
 
-    let waypoint = Point { x : 10, y: -4, facing : EAST};
-    let actual = rotate_waypoint(waypoint, Direction::LEFT, 90);
-    let expected = Point { x: -4, y: -10, facing: NORTH};
-    assert_eq!(actual, expected);
+    let mut p = Point { x: 10, y: -4 };
+    assert_eq!(p.rotate(&LEFT, 270), Point { x: 4, y: 10 });
 
-    let waypoint = Point { x : 10, y: -4, facing : EAST};
-    let actual = rotate_waypoint(waypoint, Direction::LEFT, 360);
-    let expected = Point { x : 10, y: -4, facing : EAST};
-    assert_eq!(actual, expected);
+    let mut p = Point { x: 10, y: -4 };
+    assert_eq!(p.rotate(&LEFT, 360), Point { x: 10, y: -4 });
 
-    let waypoint = Point { x : 10, y: -4, facing : EAST};
-    let actual = rotate_waypoint(waypoint, Direction::LEFT, 180);
-    let expected = Point { x : -10, y: 4, facing : WEST};
-    assert_eq!(actual, expected);
+    let mut p = Point { x: 10, y: -4 };
+    assert_eq!(p.rotate(&LEFT, 90), Point { x: -4, y: -10 });
 
-    let waypoint = Point { x : 10, y: -4, facing : EAST};
-    let actual = rotate_waypoint(waypoint, Direction::LEFT, 270);
-    let expected = Point { x : 4, y: 10, facing : SOUTH};
-    assert_eq!(actual, expected);
+    let mut p = Point { x: 10, y: -4 };
+    assert_eq!(p.rotate(&LEFT, 180), Point { x: -10, y: 4 });
   }
 
   #[test]
