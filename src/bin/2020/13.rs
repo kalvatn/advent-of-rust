@@ -33,14 +33,13 @@ fn part_one(input: &str) -> usize {
     .cloned()
     .filter(|id| id > &0u64)
     .collect::<Vec<u64>>();
-
-  let mut second = timestamp;
+  let mut minute = timestamp;
   loop {
-    second += 1;
-    if second >= timestamp {
+    minute += 1;
+    if minute >= timestamp {
       for bus_id in &bus_ids {
-        if second % bus_id == 0 {
-          return (bus_id * (second - timestamp)) as usize;
+        if minute % bus_id == 0 {
+          return (bus_id * (minute - timestamp)) as usize;
         }
       }
     }
@@ -69,14 +68,10 @@ fn part_two(input: &str) -> u64 {
     .filter(|item| item.1 > 0u64)
     .map(|item| (item.0 as u64, item.1 as u64))
     .collect::<Vec<(u64, u64)>>();
-  let mut minute = if bus_ids[0].1 == 37 {
-    100000000000000u64
-  } else {
-    0u64
-  };
-  let mut counter = bus_ids[0].1;
+  let mut minute = 0u64;
+  let mut step = bus_ids[0].1;
   loop {
-    minute += counter;
+    minute += step;
     let departing_ids = bus_ids
       .iter()
       .filter(|(wait, id)| (minute + wait) % id == 0)
@@ -87,7 +82,7 @@ fn part_two(input: &str) -> u64 {
     if departing_ids.len() == bus_ids.len() {
       return minute;
     } else {
-      counter = lcm_multi(departing_ids);
+      step = lcm_multi(departing_ids);
     }
   }
 }
@@ -112,7 +107,6 @@ mod test {
 
   const TEST_INPUT: &str = "939
 7,13,x,x,59,x,31,19";
-
   const TEST_INPUT_2: &str = "939
 17,x,13,19";
   const TEST_INPUT_3: &str = "939
