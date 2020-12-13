@@ -1,10 +1,10 @@
 #![allow(
-unused_variables,
-unused_imports,
-unused_assignments,
-dead_code,
-deprecated,
-unused_parens
+  unused_variables,
+  unused_imports,
+  unused_assignments,
+  dead_code,
+  deprecated,
+  unused_parens
 )]
 
 use std::collections::{HashMap, HashSet};
@@ -25,12 +25,27 @@ fn parse_input(input: &str) -> (u64, Vec<u64>) {
   let lines: Vec<&str> = input.lines().collect();
   (
     lines[0].parse::<u64>().unwrap(),
-    lines[1].split(",").filter_map(|s| s.parse::<u64>().ok()).collect::<Vec<u64>>()
+    // lines[1].split(",").filter_map(|s| s.parse::<u64>().ok()).collect::<Vec<u64>>()
+    lines[1]
+      .split(",")
+      .map(|s| {
+        if s == "x" {
+          0u64
+        } else {
+          s.parse::<u64>().unwrap()
+        }
+      })
+      .collect::<Vec<u64>>(),
   )
 }
 
 fn part_one(input: &str) -> usize {
   let (timestamp, bus_ids) = parse_input(input);
+  let bus_ids = bus_ids
+    .iter()
+    .cloned()
+    .filter(|id| id > &0u64)
+    .collect::<Vec<u64>>();
 
   let mut second = timestamp;
   loop {
@@ -77,7 +92,7 @@ mod test {
   fn test_parse_input() {
     let (timestamp, bus_ids) = parse_input(TEST_INPUT);
     assert_eq!(timestamp, 939);
-    assert_eq!(bus_ids, vec![7, 13, 59, 31, 19]);
+    assert_eq!(bus_ids, vec![7, 13, 0, 0, 59, 0, 31, 19]);
   }
 
   #[test]
