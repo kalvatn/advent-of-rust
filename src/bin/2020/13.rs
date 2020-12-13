@@ -1,14 +1,3 @@
-#![allow(
-  unused_variables,
-  unused_imports,
-  unused_assignments,
-  dead_code,
-  deprecated,
-  unused_parens,
-  unreachable_code,
-  unused_mut
-)]
-
 use std::time::Instant;
 
 use itertools::Itertools;
@@ -58,8 +47,21 @@ fn part_one(input: &str) -> usize {
   }
 }
 
+fn lcm_multi(numbers: Vec<u64>) -> u64 {
+  match numbers.len() {
+    0 | 1 => 1,
+    2 => numbers[0].lcm(&numbers[1]),
+    _ => {
+      let lcm = numbers[0].lcm(&numbers[1]);
+      let mut next: Vec<u64> = numbers.iter().dropping(2).cloned().collect();
+      next.push(lcm);
+      lcm_multi(next)
+    }
+  }
+}
+
 fn part_two(input: &str) -> u64 {
-  let (timestamp, schedule) = parse_input(input);
+  let (_timestamp, schedule) = parse_input(input);
   let bus_ids = schedule
     .iter()
     .cloned()
@@ -67,60 +69,30 @@ fn part_two(input: &str) -> u64 {
     .filter(|item| item.1 > 0u64)
     .map(|item| (item.0 as u64, item.1 as u64))
     .collect::<Vec<(u64, u64)>>();
-
-  let mut minute = 0u64; //if bus_ids[0].1 == 37 { 100000000000000u64 } else { 0u64 };
-                         // let mut minute = if bus_ids[0].1 == 37 { 10000000000089u64 } else { 0u64 };
-
-  // let vec1: Vec<(u64, u64)> = vec![(0, 7), (1, 13), (4, 59), (6, 31), (7, 19)];
-  let min = bus_ids.iter().map(|item| item.1).min().unwrap();
-  let max = bus_ids.iter().map(|item| item.1).max().unwrap();
-  println!("{} {}", min, max);
-  let mut counter = 1;
-  let mut next_print = 10000;
+  let mut minute = if bus_ids[0].1 == 37 {
+    100000000000000u64
+  } else {
+    0u64
+  };
+  let mut counter = bus_ids[0].1;
   loop {
-    // if minute % counter == 0 {
-    //   counter += min;
-    // }
-    if minute > next_print {
-      println!("{} {}", minute, counter);
-      if next_print < 1000000000000 {
-        next_print *= 10;
-      } else {
-        next_print += 100000000000;
-      }
-    }
-    if bus_ids.iter().all(|item| {
-      let yes = (minute + item.0) % item.1 == 0;
-      if yes {
-        if item.1 > counter && counter < max {
-          if (item.1 * counter) < max {
-            println!(
-              "new counter @ {} {} > {}",
-              minute,
-              item.1,
-              (item.1 * counter)
-            );
-            counter = (item.1 * counter);
-          }
-        }
-        // println!("{} + {} = {} % {} == 0", minute, item.0, minute+item.0, item.1)
-      }
-      yes
-    }) {
-      return minute;
-    }
     minute += counter;
+    let departing_ids = bus_ids
+      .iter()
+      .filter(|(wait, id)| (minute + wait) % id == 0)
+      .map(|(_wait, id)| id)
+      .cloned()
+      .collect::<Vec<u64>>();
+
+    if departing_ids.len() == bus_ids.len() {
+      return minute;
+    } else {
+      counter = lcm_multi(departing_ids);
+    }
   }
 }
 
 fn main() {
-  // start 08:51
-  // p1 09:12
-  const TEST_INPUT_5: &str = "939
-67,7,x,59,61";
-  const TEST_INPUT_6: &str = "939
-1789,37,47,1889";
-  let input = TEST_INPUT_6;
   let input = read_input();
 
   let time = Instant::now();
@@ -162,7 +134,7 @@ mod test {
   #[test]
   fn test_part_one() {
     assert_eq!(part_one(TEST_INPUT), 295);
-    // assert_eq!(part_one(&read_input()), 0);
+    assert_eq!(part_one(&read_input()), 410);
   }
 
   #[test]
@@ -173,6 +145,6 @@ mod test {
     assert_eq!(part_two(TEST_INPUT_4), 779210);
     assert_eq!(part_two(TEST_INPUT_5), 1261476);
     assert_eq!(part_two(TEST_INPUT_6), 1202161486);
-    // assert_eq!(part_two(&read_input()), 0);
+    assert_eq!(part_two(&read_input()), 600691418730595);
   }
 }
