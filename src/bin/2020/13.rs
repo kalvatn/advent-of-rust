@@ -4,16 +4,15 @@
   unused_assignments,
   dead_code,
   deprecated,
-  unused_parens
+  unused_parens,
+  unreachable_code,
+  unused_mut
 )]
 
-use std::collections::{HashMap, HashSet};
 use std::time::Instant;
 
-use futures::StreamExt;
 use itertools::Itertools;
-use lazy_static::lazy_static;
-use regex::Regex;
+use num::Integer;
 
 use common::io;
 
@@ -25,7 +24,6 @@ fn parse_input(input: &str) -> (u64, Vec<u64>) {
   let lines: Vec<&str> = input.lines().collect();
   (
     lines[0].parse::<u64>().unwrap(),
-    // lines[1].split(",").filter_map(|s| s.parse::<u64>().ok()).collect::<Vec<u64>>()
     lines[1]
       .split(",")
       .map(|s| {
@@ -60,15 +58,70 @@ fn part_one(input: &str) -> usize {
   }
 }
 
-fn part_two(input: &str) -> usize {
-  return 0;
+fn part_two(input: &str) -> u64 {
+  let (timestamp, schedule) = parse_input(input);
+  let bus_ids = schedule
+    .iter()
+    .cloned()
+    .enumerate()
+    .filter(|item| item.1 > 0u64)
+    .map(|item| (item.0 as u64, item.1 as u64))
+    .collect::<Vec<(u64, u64)>>();
+
+  let mut minute = 0u64; //if bus_ids[0].1 == 37 { 100000000000000u64 } else { 0u64 };
+                         // let mut minute = if bus_ids[0].1 == 37 { 10000000000089u64 } else { 0u64 };
+
+  // let vec1: Vec<(u64, u64)> = vec![(0, 7), (1, 13), (4, 59), (6, 31), (7, 19)];
+  let min = bus_ids.iter().map(|item| item.1).min().unwrap();
+  let max = bus_ids.iter().map(|item| item.1).max().unwrap();
+  println!("{} {}", min, max);
+  let mut counter = 1;
+  let mut next_print = 10000;
+  loop {
+    // if minute % counter == 0 {
+    //   counter += min;
+    // }
+    if minute > next_print {
+      println!("{} {}", minute, counter);
+      if next_print < 1000000000000 {
+        next_print *= 10;
+      } else {
+        next_print += 100000000000;
+      }
+    }
+    if bus_ids.iter().all(|item| {
+      let yes = (minute + item.0) % item.1 == 0;
+      if yes {
+        if item.1 > counter && counter < max {
+          if (item.1 * counter) < max {
+            println!(
+              "new counter @ {} {} > {}",
+              minute,
+              item.1,
+              (item.1 * counter)
+            );
+            counter = (item.1 * counter);
+          }
+        }
+        // println!("{} + {} = {} % {} == 0", minute, item.0, minute+item.0, item.1)
+      }
+      yes
+    }) {
+      return minute;
+    }
+    minute += counter;
+  }
 }
 
 fn main() {
   // start 08:51
   // p1 09:12
+  const TEST_INPUT_5: &str = "939
+67,7,x,59,61";
+  const TEST_INPUT_6: &str = "939
+1789,37,47,1889";
+  let input = TEST_INPUT_6;
   let input = read_input();
-  println!("{:?}", input);
 
   let time = Instant::now();
   let p1 = part_one(&input);
@@ -88,6 +141,17 @@ mod test {
   const TEST_INPUT: &str = "939
 7,13,x,x,59,x,31,19";
 
+  const TEST_INPUT_2: &str = "939
+17,x,13,19";
+  const TEST_INPUT_3: &str = "939
+67,7,59,61";
+  const TEST_INPUT_4: &str = "939
+67,x,7,59,61";
+  const TEST_INPUT_5: &str = "939
+67,7,x,59,61";
+  const TEST_INPUT_6: &str = "939
+1789,37,47,1889";
+
   #[test]
   fn test_parse_input() {
     let (timestamp, bus_ids) = parse_input(TEST_INPUT);
@@ -103,7 +167,12 @@ mod test {
 
   #[test]
   fn test_part_two() {
-    assert_eq!(part_two(TEST_INPUT), 0);
+    assert_eq!(part_two(TEST_INPUT), 1068781);
+    assert_eq!(part_two(TEST_INPUT_2), 3417);
+    assert_eq!(part_two(TEST_INPUT_3), 754018);
+    assert_eq!(part_two(TEST_INPUT_4), 779210);
+    assert_eq!(part_two(TEST_INPUT_5), 1261476);
+    assert_eq!(part_two(TEST_INPUT_6), 1202161486);
     // assert_eq!(part_two(&read_input()), 0);
   }
 }
