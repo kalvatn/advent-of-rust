@@ -1,26 +1,13 @@
-#![allow(
-  unused_variables,
-  unused_imports,
-  unused_assignments,
-  dead_code,
-  deprecated,
-  unused_parens
-)]
-
 use std::collections::{HashMap, HashSet};
 use std::time::Instant;
 
-use itertools::Itertools;
-use lazy_static::lazy_static;
-use regex::Regex;
-
 use common::io;
-use std::borrow::BorrowMut;
 
 fn read_input() -> String {
   return io::read_input("2020-14");
 }
 
+#[allow(unused)]
 fn parse_input(input: &str) -> &str {
   return input;
 }
@@ -97,7 +84,7 @@ fn part_one(input: &str) -> usize {
       current_mask = mask;
     } else {
       let (address, value): (usize, usize) = serde_scan::scan!("mem[{}] = {}" <- line).unwrap();
-      let binary = format!("{:036b}", value);
+      let binary = dec_to_bin(value);
       let masked = apply_mask(current_mask, &*binary);
       let decimal = bin_to_dec(&*masked);
       mem.insert(address, decimal);
