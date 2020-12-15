@@ -4,7 +4,7 @@ use std::time::Instant;
 use common::io;
 
 fn read_input() -> String {
-  return io::read_input("2016-01");
+  return io::read_input("2016-aoc-2020-01");
 }
 
 fn parse_input(input: &str) -> Vec<(char, i32)> {
