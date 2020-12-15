@@ -1,22 +1,7 @@
-#![allow(
-  unused_variables,
-  unused_imports,
-  unused_assignments,
-  dead_code,
-  deprecated,
-  unused_parens
-)]
-
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::time::Instant;
 
-use itertools::Itertools;
-use lazy_static::lazy_static;
-use regex::Regex;
-
 use common::io;
-
-const TEST_INPUT: &str = "0,3,6\n";
 
 fn read_input() -> String {
   return io::read_input("2020-15");
@@ -32,7 +17,8 @@ fn parse_input(input: &str) -> Vec<usize> {
     .collect();
 }
 
-fn get_nth_number(initial: Vec<usize>, n: usize) -> usize {
+#[allow(unused)]
+fn get_nth_number_vec(initial: Vec<usize>, n: usize) -> usize {
   let mut last_spoken = HashMap::<usize, Vec<usize>>::new();
   let mut last = 0;
   for (i, n) in initial.iter().enumerate() {
@@ -62,7 +48,6 @@ fn get_nth_number(initial: Vec<usize>, n: usize) -> usize {
 fn get_nth_number_2(initial: Vec<usize>, n: usize) -> usize {
   let mut last_spoken = HashMap::<usize, (Option<usize>, Option<usize>)>::new();
   let mut last = 0;
-  let nan = usize::max_value();
   for (i, n) in initial.iter().enumerate() {
     last_spoken.entry(*n).or_insert((Option::from(i + 1), None));
     last = *n;
@@ -72,14 +57,11 @@ fn get_nth_number_2(initial: Vec<usize>, n: usize) -> usize {
     let (i1, i2) = *last_spoken.get(&last).unwrap();
     if i2.is_none() {
       last = 0;
-      let (i1, i2) = *last_spoken.get(&last).unwrap();
+      let (i1, _i2) = *last_spoken.get(&last).unwrap();
       last_spoken.insert(last, (i1, Option::from(i)));
     } else {
-      let last_number = (i2.unwrap() - i1.unwrap());
-      let (i1, i2) = *last_spoken
-        .entry(last_number)
-        .or_insert((Option::from(i), None));
-      last = last_number;
+      last = i2.unwrap() - i1.unwrap();
+      let (i1, i2) = *last_spoken.entry(last).or_insert((Option::from(i), None));
       last_spoken.insert(last, (i2.or(i1), Option::from(i)));
     }
     i += 1;
