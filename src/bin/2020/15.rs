@@ -31,17 +31,15 @@ fn parse_input(input: &str) -> Vec<usize> {
     .collect();
 }
 
-fn part_one(input: &str) -> usize {
+fn get_nth_number(initial: Vec<usize>, n: usize) -> usize {
   let mut last_spoken = HashMap::<usize, Vec<usize>>::new();
-  let numbers = parse_input(input);
-  let mut order = vec![];
-  for (i, n) in numbers.iter().enumerate() {
+  let mut last = 0;
+  for (i, n) in initial.iter().enumerate() {
     last_spoken.entry(*n).or_insert(vec![]).push(i + 1);
-    order.push(*n);
+    last = *n;
   }
-  let mut i = numbers.len() + 1;
-  while i <= 30000000 {
-    let mut last = *order.last().unwrap();
+  let mut i = initial.len() + 1;
+  while i <= n {
     if last_spoken.contains_key(&last) {
       let indices = last_spoken.get(&last).unwrap();
       let count = indices.len();
@@ -61,17 +59,16 @@ fn part_one(input: &str) -> usize {
       last_spoken.entry(last).or_insert(vec![]).push(i);
     }
     i += 1;
-    order.push(last);
   }
-  // for (k,v) in last_spoken {
-  //   println!("{} {:?}", k, v);
-  // }
+  return last;
+}
 
-  return *order.last().unwrap();
+fn part_one(input: &str) -> usize {
+  get_nth_number(parse_input(input), 2020)
 }
 
 fn part_two(input: &str) -> usize {
-  return 0;
+  get_nth_number(parse_input(input), 30000000)
 }
 
 fn main() {
@@ -92,17 +89,16 @@ fn main() {
 mod test {
   use super::*;
 
-  const TEST_INPUT: &str = "";
-
   #[test]
   fn test_part_one() {
-    assert_eq!(part_one(TEST_INPUT), 0);
-    // assert_eq!(part_one(&read_input()), 0);
+    assert_eq!(part_one("0,3,6"), 436);
+    assert_eq!(part_one(&read_input()), 276);
   }
 
   #[test]
+  // #[ignore]
   fn test_part_two() {
-    assert_eq!(part_two(TEST_INPUT), 0);
-    // assert_eq!(part_two(&read_input()), 0);
+    assert_eq!(part_two("0,3,6"), 175594);
+    assert_eq!(part_two(&read_input()), 31916);
   }
 }
