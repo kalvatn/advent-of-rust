@@ -8,6 +8,7 @@
   unused_mut
 )]
 
+use std::borrow::BorrowMut;
 use std::collections::{HashMap, HashSet};
 use std::time::Instant;
 
@@ -17,7 +18,6 @@ use lazy_static::lazy_static;
 use regex::Regex;
 
 use common::io;
-use std::borrow::BorrowMut;
 
 const TEST_INPUT: &str = "class: 1-3 or 5-7
 row: 6-11 or 33-44
@@ -88,6 +88,7 @@ fn get_invalid(tickets: &Vec<usize>, rules: &HashMap<String, Vec<usize>>) -> Vec
   }
   return invalid;
 }
+
 fn any_rule_matches(ticket: usize, rules: &HashMap<String, Vec<usize>>) -> bool {
   for (rule, range) in rules {
     if range.contains(&ticket) {
@@ -104,56 +105,6 @@ fn part_one(input: &str) -> usize {
   return get_invalid(&nearby_tickets, &rules).into_iter().sum();
 }
 
-fn filter_columns(
-  rules: &HashMap<String, Vec<usize>>,
-  my_ticket: &Vec<usize>,
-  valid_tickets: &Vec<Vec<usize>>,
-  found: &mut HashMap<usize, String>,
-) -> HashMap<usize, HashSet<String>> {
-  let mut field_types = HashMap::<usize, HashSet<String>>::new();
-  for (rule, valid_range) in rules {
-    for (i, field) in my_ticket.iter().enumerate() {
-      if found.contains_key(&i) {
-        for (k, v) in field_types.borrow_mut() {
-          if k != &i {
-            v.remove(&found[&i]);
-          }
-        }
-        field_types.insert(i, HashSet::new());
-        field_types.get_mut(&i).unwrap().insert(found[&i].clone());
-      } else {
-        let mut all_match = valid_range.contains(field);
-        if all_match {
-          for ticket in valid_tickets {
-            if !valid_range.contains(&ticket[i]) {
-              all_match = false;
-            }
-          }
-          if all_match {
-            field_types
-              .entry(i)
-              .or_insert(HashSet::new())
-              .insert(rule.to_string());
-          }
-        }
-      }
-    }
-  }
-  let mut all_found = true;
-  for (i, r) in &field_types {
-    if r.len() == 1 || found.contains_key(i) {
-      let name = r.into_iter().nth(0).unwrap().to_string();
-      found.insert(*i, name.to_string());
-    } else {
-      all_found = false;
-    }
-  }
-  if all_found {
-    return field_types;
-  }
-  return filter_columns(rules, my_ticket, valid_tickets, found);
-}
-
 fn part_two(input: &str) -> usize {
   let (rules, nearby_tickets, my_ticket) = parse_input(input);
   let mut valid_tickets = vec![];
@@ -162,11 +113,44 @@ fn part_two(input: &str) -> usize {
       valid_tickets.push(nearby)
     }
   }
-  let mut found = HashMap::<usize, String>::new();
-  let field_types = filter_columns(&rules, &my_ticket, &valid_tickets, &mut found);
+  valid_tickets.push(my_ticket.clone());
+  let mut candidates: HashMap<usize, HashSet<String>> = HashMap::new();
+
+  for i in 0..my_ticket.len() {
+    for (rule_name, rule_range) in &rules {
+      let mut add_cand = true;
+      for ticket in &valid_tickets {
+        if !rule_range.contains(&ticket[i]) {
+          add_cand = false;
+          break;
+        }
+      }
+      if add_cand {
+        candidates
+          .entry(i)
+          .or_insert(HashSet::new())
+          .insert(rule_name.to_string());
+      }
+    }
+  }
+
+  let mut sorted_candidates: Vec<(usize, HashSet<String>)> = candidates
+    .into_iter()
+    .sorted_by(|a, b| Ord::cmp(&a.1.len(), &b.1.len()))
+    .collect::<Vec<(usize, HashSet<String>)>>();
+
+  let mut pos = HashMap::<usize, String>::new();
+  let mut found = HashSet::new();
+  for (index, mut field_names) in sorted_candidates {
+    field_names.retain(|k| !found.contains(k));
+    let field_name = field_names.iter().nth(0).unwrap().to_string().clone();
+    found.insert(field_name.clone());
+    pos.insert(index, field_name.clone());
+  }
+
   let mut result = 1;
-  for (k, v) in &field_types {
-    if v.iter().nth(0).unwrap().starts_with("departure") {
+  for (k, v) in &pos {
+    if v.starts_with("departure") {
       result *= my_ticket[*k];
     }
   }
@@ -174,7 +158,6 @@ fn part_two(input: &str) -> usize {
 }
 
 fn main() {
-  // let input = TEST_INPUT_2;
   let input = read_input();
 
   let time = Instant::now();
@@ -200,7 +183,7 @@ mod test {
 
   #[test]
   fn test_part_two() {
-    // assert_eq!(part_two(TEST_INPUT_2), 0);
+    assert_eq!(part_two(TEST_INPUT), 1);
     assert_eq!(part_two(&read_input()), 1346570764607);
   }
 }
