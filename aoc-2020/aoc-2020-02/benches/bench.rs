@@ -1,9 +1,9 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use aoc_common::io::read_input;
-use aoc_2020_01::{parse_input, part_one, part_two};
+use aoc_2020_02::{parse_input, part_one, part_two};
 
 fn criterion_benchmark(c: &mut Criterion) {
-  let input = read_input("2020-01");
+  let input = read_input("2020-02");
   c.bench_function("2020-01 parse   ", |b|
     b.iter(|| parse_input(black_box(&input))));
   let parsed = parse_input(&input);
